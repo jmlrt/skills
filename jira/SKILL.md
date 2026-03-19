@@ -86,3 +86,4 @@ When asked "what are the outcomes of the tickets in this epic?":
 - **Epic child query returns nothing**: try the alternative epic pattern (`parent =` vs `"Epic Link" =`), or remove status filters.
 - **Moved tickets**: Jira may redirect keys (e.g., `OLD-5652 → NEW-2834`). Treat the redirected key as canonical in notes.
 - **Large epics**: fetch comments only for non-Done tickets or tickets updated in the review window.
+- **`addcomment` does not exist**: use `acli jira workitem comment create --key PROJECT-1234 --body "..."` instead.

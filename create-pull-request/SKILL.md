@@ -23,7 +23,7 @@ This skill covers **creating (and updating) GitHub pull requests** using the Git
 - **Repo**: Use the **github** skill for repo selection (e.g. `--repo <owner/repo>` when the PR is not in the current git repo).
 - **Test plan**: Infer from the change surface; run the smallest sufficient set of checks and record commands/results in the PR when relevant.
 - **Write operations**: Creating or editing a PR is a write operation; ensure the user has requested it or approved it (see the github skill for approval defaults).
-- **Branch base**: Always branch from the repo's default base branch (usually `main`) explicitly — `git checkout -b <branch> main` — unless explicitly asked to branch from elsewhere. Never branch from whatever happens to be the current branch, as unrelated commits from that branch will appear in the PR diff.
+- **Branch base**: Always branch from the repo's default base branch explicitly — `git checkout -b <branch> <default-branch>` — unless explicitly asked to branch from elsewhere. Never branch from whatever happens to be the current branch, as unrelated commits from that branch will appear in the PR diff. Check the default branch first (`gh repo view --json defaultBranchRef --jq .defaultBranchRef.name`) — it is `master` in some repos, not always `main`.
 - **Multiple PRs in one session**: when creating PRs in multiple repos, `git checkout <branch>` into the correct branch before each `gh pr create` call — `gh` resolves branch from the current checkout.
 
 ## Title preferences
@@ -35,7 +35,7 @@ This skill covers **creating (and updating) GitHub pull requests** using the Git
 
 ## Body preferences
 
-- **Describe your changes**: Short **bullet list**. One bullet per main change; concise phrasing; no long paragraphs.
+- **Describe your changes**: Short **bullet list** or a few sentences of high-level prose. Focus on the outcome/goal, not implementation details. One bullet per main change; concise phrasing; no long paragraphs.
 - When updating a PR description, prefer a high-level, behavior/impact-focused change list (what changes for PR builds vs main), not a detailed accounting of code edits.
 - Avoid bold/emphasis formatting in the PR body unless explicitly requested.
 - When the change has **measurable impact** (performance, which jobs/hooks run, etc.): add a short **impact** block with before/after or what is skipped. Use **lists and sub-bullets**, not tables.
