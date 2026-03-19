@@ -1,7 +1,7 @@
 ---
 name: review-pull-request
 description: Reviews GitHub pull requests comprehensively. Triages existing review comments, performs independent code review, runs tests, validates manual testing, checks Jira/issue coverage. Use when the user asks to review a PR, check a PR, or audit PR readiness.
-allowed-tools: "Bash(gh:*), Read, Grep, Glob"
+allowed-tools: "Bash(gh pr*), Bash(gh issue*), Bash(gh run*), Read, Grep, Glob"
 argument-hint: [owner/repo#number or PR URL]
 ---
 
@@ -29,7 +29,6 @@ Determine mode before starting. The agent picks based on signals; user can overr
 
 **Default**: polish mode. If signals are ambiguous, confirm stance with user before proceeding.
 
----
 
 ## Review checklist
 
@@ -40,6 +39,7 @@ Work through all phases. Phases 1–2 can run in parallel using batch tool calls
 Use the **github** skill for all GitHub reads:
 - PR metadata, diff, all review comments including **outdated** threads
 - PR description and body comment thread for manual test evidence
+- Check status via `gh pr checks <n> --repo <r>`; for failing checks, fetch logs with `gh run view <run-id> --log-failed`
 
 Use the **jira** skill for ticket context if the PR links a Jira ticket **and jira is installed; skip this step otherwise**.
 
@@ -53,11 +53,7 @@ For each existing review comment thread (including outdated):
 - Check if the issue is addressed in the latest diff
 - Classify: `can resolve` (addressed or correctly dismissed) vs `still needs fix`
 
-Present the triage list to the user before taking any action. Only resolve threads after explicit user approval. Use `gh api graphql` to resolve threads:
-
-```bash
-gh api graphql -f query='mutation { resolveReviewThread(input: {threadId: "THREAD_ID"}) { thread { isResolved } } }'
-```
+Present the triage list to the user before taking any action. Only resolve threads after explicit user approval. Use the **github** skill's resolve-thread command.
 
 ### Phase 3 — Independent code review
 
@@ -67,18 +63,13 @@ Review the diff for:
 - **Tests**: coverage of new/changed behavior, missing edge cases
 - **Consistency**: patterns matching the rest of the codebase, DRY violations, duplicate code blocks
 - **Security**: secrets handling, permissions, injection vectors
-- **Performance**: unnecessary allocations, N+1 patterns
-- **Documentation**: New or non-trivial functions have comments or docstrings; new pipelines/automation/features are documented (what it does, where it lives, how to run it).
-- **Logging / observability**: Logs show *what* was checked (e.g. URLs tested, entities validated, counts), not only high-level "X OK", so failures are debuggable from logs alone.
-- **Scope / design**: For scheduled jobs, batch processing, or broad scope, consider asking whether frequency/scope is necessary (e.g. daily for all branches vs first week only).
-- **Process / sustainability**: For validation or checklist-style automation, consider whether there is a documented way to keep the pipeline in sync when the set of validated items grows (e.g. "when we add new artifacts, how do we remember to add them to this pipeline?"). Suggest docs or a checklist if missing.
+- **Maintainability**: readability, naming clarity, complexity — would a newcomer understand this code in 6 months?
+- **Documentation**: New or non-trivial functions have comments or docstrings; new pipelines/automation/features are documented.
+- **Logging / observability**: Logs show *what* was checked (e.g. URLs tested, entities validated, counts), not only high-level "X OK".
+- **Scope / design**: For scheduled jobs or broad scope, consider asking whether frequency/scope is necessary.
+- **Process / sustainability**: For validation automation, consider whether there is a documented way to keep it in sync as the codebase grows.
 
-When suggesting NITs, prefer asking for: function-level comments/docstrings, unit tests for new non-trivial logic, more detailed logging (what was checked), documentation for new pipelines/features, and a process or checklist so validation stays in sync (e.g. new artifact types → update pipeline).
-
-Inline comment placement rule:
-- When leaving **inline review comments**, comment only on lines **actually changed by the PR** (added/modified lines in the diff),
-  not on unchanged context lines that happen to be visible in the diff hunk.
-- Exception: only comment on unchanged lines if the user explicitly asks to audit broader surrounding code.
+Inline comment placement rule: comment only on lines **actually changed by the PR**, not on unchanged context lines visible in the diff hunk.
 
 ### Phase 4 — Test execution
 
@@ -87,8 +78,7 @@ Run unit tests for the changed code. Use the repo's test runner (check `CLAUDE.m
 ### Phase 5 — Manual test assessment
 
 - Review what manual tests are claimed in the PR description and comments
-- Identify gaps: data validation against prod endpoints, pipeline output comparison, endpoint consistency checks
-- If gaps exist and can be filled without the PR author (e.g., by fetching public prod data or generating pipeline YAML locally), do it
+- Identify gaps; if they can be filled without the PR author, do it
 - Propose any remaining manual tests with exact commands
 
 ### Phase 6 — Jira / issue alignment
@@ -104,33 +94,23 @@ If a Jira ticket or GitHub issue is linked **and the jira skill is available**:
 - **Suggestion** (consider fixing)
 - **NIT** (nice to have, low priority)
 
-When listing NITs, consider including (when applicable): function comments/docstrings, unit tests for new logic, logging that shows what was checked (e.g. URLs/entities), documentation for new pipelines/features, and a process or checklist so validation stays in sync (e.g. new artifact types → update pipeline).
+When listing NITs, consider: function comments/docstrings, unit tests for new logic, logging that shows what was checked, documentation for new pipelines/features, and a process to keep validation in sync.
 
-**Ship-it mode output**: single review comment with critical items listed, followed by one consolidated "optional follow-up NITs" block at the end. No separate inline comments for NITs.
+**Ship-it mode output**: single review comment with critical items, followed by one consolidated "optional follow-up NITs" block. No separate inline comments for NITs.
 
 **Polish mode output**: inline comments per finding, plus a summary comment.
 
 **Default**: output the review text in chat for the user to copy-paste via the GitHub UI. Only post directly via `gh pr review` or `gh api` if the user explicitly asks.
 
-Tone: concise and informal. Avoid over-formal bullet-per-finding structure for minor issues.
+Tone: concise and informal.
 
----
-
-## Integration with other skills
-
-- **github**: all GitHub reads (PR metadata, diff, review comments, issue comments). Try in sandbox first; no `full_network` needed for `gh` commands.
-- **jira** (optional): linked ticket acceptance criteria and context. Skip if not installed.
-- **create-pull-request**: reference for comment/review body style and formatting preferences.
-
----
 
 ## Write operations
 
 - **Resolving threads**: only after user approves the Phase 2 triage list. Never resolve pre-emptively.
 - **Posting review**: output text in chat by default. Only call `gh pr review` or post comments via `gh api` when user explicitly requests it.
-- **No merging**: never merge a PR via CLI. Merges happen via the GitHub UI.
+- **No merging**: never merge a PR via CLI unless explicitly asked.
 
----
 
 ## Backport rules
 
@@ -140,13 +120,11 @@ For backport PRs:
 - **Only flag** issues new or different due to the target branch (merge conflicts, wrong branch assumptions, stale TODOs referencing unmerged PRs)
 - **Do not re-flag** NITs/suggestions already present and approved in the original PR
 
----
 
 ## Disclaimer rule
 
-When posting a review or comment whose body was **generated by the agent**, append `_Comment generated by Claude_` to the body. When posting text provided **verbatim by the user**, do not add the disclaimer.
+When posting a review or comment whose body was **generated by the agent**, append `_Comment generated by Claude_ (or other agent name)` to the body. When posting text provided **verbatim by the user**, do not add the disclaimer.
 
----
 
 ## Subagent output mode
 

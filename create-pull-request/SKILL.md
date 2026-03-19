@@ -1,19 +1,12 @@
 ---
 name: create-pull-request
-description: Skill for creating GitHub pull requests. Covers PR template usage, title/body preferences, and all instructions for creating a PR.
-allowed-tools: "Bash(gh:*)"
+description: Creates and updates GitHub pull requests. Covers PR template usage, title/body preferences, and all instructions for creating a PR.
+allowed-tools: "Bash(gh pr*)"
 ---
 
 # Create Pull Request
 
 This skill covers **creating (and updating) GitHub pull requests** using the GitHub CLI (`gh`). For how to run `gh` (commands, repo selection, auth, read-only usage), see the **github** skill.
-
-## When to use
-
-- User asks to create a PR, open a PR, or draft/update a PR description.
-- You are preparing to run `gh pr create` or `gh pr edit` and need title, body, and process instructions.
-- **Creating**: use template (if any), title/body preferences, and creation instructions below.
-- **Updating** (e.g. `gh pr edit`): same title and body preferences; keep following the repo template structure if one exists.
 
 ## Always follow the repo PR template
 
@@ -30,7 +23,7 @@ This skill covers **creating (and updating) GitHub pull requests** using the Git
 - **Repo**: Use the **github** skill for repo selection (e.g. `--repo <owner/repo>` when the PR is not in the current git repo).
 - **Test plan**: Infer from the change surface; run the smallest sufficient set of checks and record commands/results in the PR when relevant.
 - **Write operations**: Creating or editing a PR is a write operation; ensure the user has requested it or approved it (see the github skill for approval defaults).
-- **Branch base**: Always branch from the repo's default base branch (usually `main`) explicitly — `git checkout -b <branch> main`. Never branch from whatever happens to be the current branch, as unrelated commits from that branch will appear in the PR diff.
+- **Branch base**: Always branch from the repo's default base branch (usually `main`) explicitly — `git checkout -b <branch> main` — unless explicitly asked to branch from elsewhere. Never branch from whatever happens to be the current branch, as unrelated commits from that branch will appear in the PR diff.
 - **Multiple PRs in one session**: when creating PRs in multiple repos, `git checkout <branch>` into the correct branch before each `gh pr create` call — `gh` resolves branch from the current checkout.
 
 ## Title preferences
@@ -73,5 +66,5 @@ N/A
 
 ## Relation to github
 
-- **github**: How to use the `gh` CLI (read PR/issue, repo selection, `gh pr create` / `gh pr edit` invocation, auth, merge policy). Use it when running any `gh` command.
-- **create-pull-request**: What to do when creating a PR (template, title/body preferences, draft by default, Closes #X, test plan). Use it to compose the title and body and to follow the creation process.
+- **github**: CLI usage — `gh pr create` / `gh pr edit`, repo selection, auth, draft/ready conversions.
+- **create-pull-request**: what to put in the PR — template, title/body preferences, draft by default, issue linkage, test plan.

@@ -1,7 +1,7 @@
 ---
 name: triage-pull-requests
 description: Orchestrates review of one or more GitHub PRs in parallel using subagents. Produces a triage summary table with Critical/Suggestion/NIT findings per PR, then posts reviews (approve/comment/request-changes) based on user decisions. Use when the user asks to review multiple PRs, review PRs in parallel, or batch-review PRs across repos.
-allowed-tools: "Bash(gh:*), Read"
+allowed-tools: "Bash(gh repo*), Bash(gh search*), Bash(gh api*), Bash(gh pr*), Read"
 argument-hint: [owner/repo#n ...]
 ---
 
@@ -68,7 +68,7 @@ After all subagents return, present a compact table:
 
 Always include the PR URL as a markdown link in the PR column.
 
-Then list findings per PR (Critical → Suggestions → NITs → Improvements). When summarizing NITs, align with review-pull-request: consider function comments/docstrings, unit tests, detailed logging (what was checked), docs for new pipelines/features, and process to keep validation in sync (e.g. new artifacts → update pipeline). Ask the user for a decision per PR.
+Then list findings per PR (Critical → Suggestions → NITs → Improvements), aligning with the NIT guidelines in **review-pull-request**. Ask the user for a decision per PR.
 
 ## Phase 3 — Decisions
 
