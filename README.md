@@ -1,15 +1,13 @@
 # skills
 
-Personal agent skills for Claude Code, Cursor, and other AI coding tools — GitHub, Jira, Buildkite, and PR workflows.
+Personal agent skills for Claude Code and Cursor — GitHub, Jira, Buildkite, and PR workflows.
 
 ## Compatibility
 
 | Tool | Supported |
 |---|---|
 | Claude Code | Yes |
-| Cursor | Yes (via `.cursor/skills/`) |
-| GitHub Copilot | Partial (no native skills protocol yet) |
-| Gemini CLI | Partial |
+| Cursor | Yes |
 
 ## Install
 
