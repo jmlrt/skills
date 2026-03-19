@@ -52,13 +52,18 @@ JIRA_BASE_URL=https://yourorg.atlassian.net
 ## Local dev workflow
 
 ```bash
-# Clone and install as symlinks (edits are picked up immediately)
+# Clone repo
 git clone git@github.com:jmlrt/skills.git ~/Code/jmlrt/skills/
-cd ~/Code/jmlrt/skills/
-npx skills add -g ./
+
+# Create direct symlinks into ~/.claude/skills/ (edits are picked up immediately)
+for skill in github create-pull-request review-pull-request triage-pull-requests jira buildkite; do
+  ln -sf ~/Code/jmlrt/skills/$skill ~/.claude/skills/$skill
+done
 ```
 
 After that, editing any `SKILL.md` file takes effect immediately — no reinstall needed.
+
+> **Note**: `npx skills add -g ./` copies files to `~/.agents/skills/` rather than symlinking to the repo, so edits are not picked up automatically. Use the manual symlink approach above for local development.
 
 ### Update
 
