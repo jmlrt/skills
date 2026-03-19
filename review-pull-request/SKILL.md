@@ -68,6 +68,8 @@ Review the diff for:
 - **Logging / observability**: Logs show *what* was checked (e.g. URLs tested, entities validated, counts), not only high-level "X OK".
 - **Scope / design**: For scheduled jobs or broad scope, consider asking whether frequency/scope is necessary.
 - **Process / sustainability**: For validation automation, consider whether there is a documented way to keep it in sync as the codebase grows.
+- **Security / permissions**: ⚠️ If the PR modifies `CLAUDE.md`, `settings.json`, or permission files, flag as **CRITICAL** — review for unsafe loosening of restrictions or permission escalation
+- **Cross-codebase patterns**: If you flag a pattern issue (e.g., broad exception handler, missing validation), grep the full codebase for the same pattern. Include findings in your review comment to help the author fix all occurrences, not just the flagged line
 
 Inline comment placement rule: comment only on lines **actually changed by the PR**, not on unchanged context lines visible in the diff hunk.
 
