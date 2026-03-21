@@ -26,17 +26,20 @@ npx skills add -g jmlrt/skills --skill github --skill review-pull-request
 
 | Skill | Description | Optional deps |
 |---|---|---|
-| `github` | Read GitHub issues/PRs/repos using the `gh` CLI. Read-only by default. | `gh` CLI |
-| `create-pull-request` | Create and update GitHub pull requests with opinionated title/body conventions. | `gh` CLI |
-| `review-pull-request` | Comprehensive PR review: triage comments, code review, test execution, Jira alignment. | `gh` CLI; `jira` skill (optional) |
+| `github` | Manage GitHub issues/PRs/repos using the `gh` CLI. Retrieve context, create/edit issues and PRs, manage workflows, resolve review threads. | `gh` CLI |
+| `pull-request` | **Author workflow**: Create and update PRs, then iterate on review feedback. Covers templates, title/body preferences, file validation. | `gh` CLI |
+| `review-pull-request` | **Reviewer workflow**: Validate PR readiness before merge. Triage comments, code review, test execution, Jira alignment, safety checks. | `gh` CLI; `jira` skill (optional) |
+| `python-development` | Production patterns for modern Python development: uv, ruff, ty, make, pre-commit. Type safety, separation of concerns, error handling, test organization. | None (reference only) |
 | `triage-pull-requests` | Batch-review multiple PRs in parallel. Produces a triage table, then posts reviews on decision. | `gh` CLI; `review-pull-request` skill |
 | `jira` | Read Jira tickets and epics using the Atlassian CLI (`acli`). Requires `{JIRA_BASE_URL}` configured. | `acli` CLI |
 | `buildkite` | Trigger and inspect Buildkite builds using the `bk` CLI. | `bk` CLI |
 
 ### Skill dependencies
 
+- `pull-request` uses the `github` skill for all `gh` CLI operations.
 - `review-pull-request` uses the `github` skill for all `gh` reads and the `jira` skill for ticket context (graceful fallback if not installed).
 - `triage-pull-requests` uses `review-pull-request` for review logic and `github` for posting.
+- `python-development` is a reference skill (no external dependencies).
 
 ## Configuration
 

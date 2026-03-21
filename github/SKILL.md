@@ -1,6 +1,6 @@
 ---
 name: github
-description: Retrieves GitHub issue/PR/repo context using GitHub CLI (gh) in read-only mode. Use when GitHub issues/PRs are mentioned, when you need PR details/reviews/checks, or when you need a small list of issues/PRs for planning notes.
+description: Manages GitHub issues/PRs/repos using GitHub CLI (gh). Retrieve context, create/edit issues and PRs, manage workflows, and resolve review threads. Use when GitHub issues/PRs are mentioned, when you need details for planning, or when managing PR/issue workflows.
 allowed-tools: "Bash(gh:*), Read"
 ---
 
@@ -67,6 +67,93 @@ gh pr list --repo owner/repo --search "review-requested:@me is:open" --limit 20
 gh issue list --repo owner/repo --state open --limit 50
 ```
 
+### Issue write operations
+
+```bash
+# Create issue
+gh issue create --title "<title>" --body "<body>"
+gh issue create --title "<title>" --body "<body>" --label <label1>,<label2>
+gh issue create --title "<title>" --body "<body>" --assignee <username>
+
+# Edit issue
+gh issue edit <ISSUE_NUMBER> --title "<new-title>"
+gh issue edit <ISSUE_NUMBER> --body "<new-body>"
+gh issue edit <ISSUE_NUMBER> --add-label <label1>,<label2>
+gh issue edit <ISSUE_NUMBER> --add-assignee <user1>,<user2>
+
+# Close issue
+gh issue close <ISSUE_NUMBER>
+gh issue close <ISSUE_NUMBER> --reason "completed"
+
+# Add comment
+gh issue comment <ISSUE_NUMBER> --body "<comment-text>"
+```
+
+## Actions & Workflows
+
+### Manage workflows
+
+```bash
+# List workflows
+gh workflow list
+
+# Enable workflow
+gh workflow enable <workflow-file-name-or-id>
+
+# Disable workflow
+gh workflow disable <workflow-file-name-or-id>
+
+# Trigger workflow manually
+gh workflow run <workflow-file-name-or-id>
+
+# Trigger with inputs
+gh workflow run <workflow-file-name-or-id> -f <input-name>=<input-value>
+```
+
+### View and control runs
+
+```bash
+# List workflow runs
+gh run list
+gh run list --workflow <workflow-name-or-id>
+gh run list --status failure
+
+# Filter by commit
+COMMIT_SHA=$(git rev-parse HEAD)
+gh run list --head-sha $COMMIT_SHA
+
+# View run details
+gh run view <run-id>
+gh run view <run-id> --json status,conclusion,createdAt,updatedAt,headBranch
+
+# View logs
+gh run view <run-id> --log
+gh run view <run-id> --log-failed
+gh run download <run-id> -D <output-dir>
+
+# List jobs in run
+gh run view <run-id> --json jobs --jq '.jobs[] | {name, status, conclusion}'
+
+# Rerun failed run
+gh run rerun <run-id>
+gh run rerun <run-id> --failed
+
+# Cancel run
+gh run cancel <run-id>
+```
+
+### PR-specific workflow queries
+
+```bash
+# Get latest run for PR
+PR=<PR_NUMBER>
+COMMIT_SHA=$(gh pr view $PR --json commits -q '.commits[-1].oid')
+gh run list --head-sha $COMMIT_SHA --limit 1 --json status,conclusion,name,createdAt,url
+
+# Get latest run on main
+gh run list --branch main --limit 1 --json status,conclusion,createdAt,workflowName
+```
+
 ## Common failure modes + fixes
 
 - **Wrong repo**: add `--repo <owner/repo>`.
@@ -99,7 +186,7 @@ unset GITHUB_TOKEN GH_TOKEN
 
 ### Creating or editing a PR
 
-Use **create-pull-request** for PR creation instructions. This skill covers only the CLI side.
+Use **pull-request** for PR creation instructions. This skill covers only the CLI side.
 
 ```bash
 gh pr create          # optionally --draft
@@ -114,10 +201,58 @@ gh pr ready <number> --undo   # → draft
 gh pr ready <number>           # → ready
 ```
 
-### Resolving review threads
+### Resolving and unresolving review threads
+
+Resolve a single thread:
 
 ```bash
-gh api graphql -f query='mutation { resolveReviewThread(input: {threadId: "THREAD_ID"}) { thread { isResolved } } }'
+gh api graphql -f id="<THREAD_ID>" -f query='
+mutation($id: ID!) {
+  resolveReviewThread(input: {threadId: $id}) {
+    thread { id isResolved }
+  }
+}
+'
+```
+
+Unresolve a thread:
+
+```bash
+gh api graphql -f id="<THREAD_ID>" -f query='
+mutation($id: ID!) {
+  unresolveReviewThread(input: {threadId: $id}) {
+    thread { id isResolved }
+  }
+}
+'
+```
+
+Batch resolve all threads on a PR:
+
+```bash
+OWNER=$(gh repo view --json owner -q .owner.login)
+REPO=$(gh repo view --json name -q .name)
+PR=<PR_NUMBER>
+
+gh api graphql -f o="$OWNER" -f r="$REPO" -f p="$PR" -f query='
+query($o: String!, $r: String!, $p: Int!) {
+  repository(owner: $o, name: $r) {
+    pullRequest(number: $p) {
+      reviewThreads(first: 100) {
+        nodes { id }
+      }
+    }
+  }
+}
+' -q '.data.repository.pullRequest.reviewThreads.nodes[].id' | while read id; do
+  gh api graphql -f i="$id" -f query='
+  mutation($i: ID!) {
+    resolveReviewThread(input: {threadId: $i}) {
+      thread { id isResolved }
+    }
+  }
+  ' && echo "✅ $id"
+done
 ```
 
 ### Posting reviews
@@ -144,3 +279,89 @@ gh api repos/<r>/pulls/<n>/reviews --method POST \
 ```bash
 gh pr view <n> --repo <r> --json headRefOid --jq .headRefOid
 ```
+
+## Troubleshooting
+
+### GraphQL Variable Declaration Errors
+
+**Error**: "Variable $id is used but not declared"
+
+**Cause**: GraphQL variable defined with `-f <var-name>="<value>"` but not declared in query/mutation signature.
+
+**Fix**: Declare variable in mutation/query signature:
+
+```bash
+# CORRECT - variable declared in signature
+gh api graphql -f id="<value>" -f query='
+mutation($id: ID!) {
+  resolveReviewThread(input: {threadId: $id}) {
+    thread { id isResolved }
+  }
+}
+'
+
+# WRONG - variable not declared
+gh api graphql -f id="<value>" -f query='
+mutation {
+  resolveReviewThread(input: {threadId: $id}) {
+    thread { id isResolved }
+  }
+}
+'
+```
+
+### Authentication Issues
+
+**Error**: "❌ Not authenticated" or "authentication required"
+
+**Fix**: Check and update authentication status:
+
+```bash
+gh auth status         # Check current authentication
+gh auth logout         # Clear credentials
+gh auth login          # Re-authenticate
+gh auth login -s repo  # Request repo scope explicitly
+```
+
+**Required scopes**: `repo`, `gist`, `read:org`
+
+**Gotcha**: If `gh auth status` reports an invalid `GITHUB_TOKEN`, `gh` prefers it over keychain auth. Fix with:
+
+```bash
+unset GITHUB_TOKEN GH_TOKEN
+```
+
+### Repository Not Found
+
+**Error**: "repository not found" or "404"
+
+**Cause**: Either not in a git repository, or REST API shorthand doesn't resolve owner/repo.
+
+**Fix 1**: Verify you're in a git repository
+
+```bash
+git rev-parse --git-dir  # Should output .git or a path
+cd /path/to/repo         # Navigate to repository root
+```
+
+**Fix 2**: Don't use REST API shorthand, extract explicitly:
+
+```bash
+# WRONG - REST shorthand fails in some contexts
+gh api repos/:owner/:repo/pulls/<PR>/comments
+
+# CORRECT - explicit extraction
+OWNER=$(gh repo view --json owner -q .owner.login)
+REPO=$(gh repo view --json name -q .name)
+gh api repos/$OWNER/$REPO/pulls/<PR>/comments
+```
+
+### Debug Mode
+
+Enable debug output to see API calls and responses:
+
+```bash
+GH_DEBUG=api gh <command>
+```
+
+This shows the actual GraphQL/REST requests and responses, helpful for diagnosing query/mutation issues.

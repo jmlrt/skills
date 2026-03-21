@@ -5,7 +5,11 @@ allowed-tools: "Bash(gh pr*), Bash(gh issue*), Bash(gh run*), Read, Grep, Glob"
 argument-hint: [owner/repo#number or PR URL]
 ---
 
-# PR Review
+# PR Review (Reviewer)
+
+This skill is for **reviewers** validating PRs before merge. Authors use the **pull-request** skill to create and update PRs, then request review.
+
+---
 
 ## Review stance
 
@@ -33,6 +37,19 @@ Determine mode before starting. The agent picks based on signals; user can overr
 ## Review checklist
 
 Work through all phases. Phases 1–2 can run in parallel using batch tool calls.
+
+### Phase 0 — Optional: Author self-check (before review)
+
+If you're an author preparing for review, consider checking before requesting review:
+
+- [ ] All tests passing locally (`make check`)
+- [ ] No secrets, temp files, or artifacts staged
+- [ ] Code changes include CHANGELOG.md/documentation
+- [ ] No unresolved issues in your own review
+
+**Note**: Reviewers will check this during Phase 3 anyway, so this is optional. Skip if your changes are ready.
+
+---
 
 ### Phase 1 — Context gathering
 
@@ -68,6 +85,8 @@ Review the diff for:
 - **Logging / observability**: Logs show *what* was checked (e.g. URLs tested, entities validated, counts), not only high-level "X OK".
 - **Scope / design**: For scheduled jobs or broad scope, consider asking whether frequency/scope is necessary.
 - **Process / sustainability**: For validation automation, consider whether there is a documented way to keep it in sync as the codebase grows.
+- **Security / permissions**: ⚠️ If the PR modifies `CLAUDE.md`, `settings.json`, or permission files, flag as **CRITICAL** — review for unsafe loosening of restrictions or permission escalation
+- **Cross-codebase patterns**: If you flag a pattern issue (e.g., broad exception handler, missing validation), grep the full codebase for the same pattern. Include findings in your review comment to help the author fix all occurrences, not just the flagged line
 
 Inline comment placement rule: comment only on lines **actually changed by the PR**, not on unchanged context lines visible in the diff hunk.
 
