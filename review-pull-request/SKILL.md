@@ -5,7 +5,11 @@ allowed-tools: "Bash(gh pr*), Bash(gh issue*), Bash(gh run*), Read, Grep, Glob"
 argument-hint: [owner/repo#number or PR URL]
 ---
 
-# PR Review
+# PR Review (Reviewer)
+
+This skill is for **reviewers** validating PRs before merge. Authors use the **pull-request** skill to create and update PRs, then request review.
+
+---
 
 ## Review stance
 
@@ -33,6 +37,19 @@ Determine mode before starting. The agent picks based on signals; user can overr
 ## Review checklist
 
 Work through all phases. Phases 1–2 can run in parallel using batch tool calls.
+
+### Phase 0 — Optional: Author self-check (before review)
+
+If you're an author preparing for review, consider checking before requesting review:
+
+- [ ] All tests passing locally (`make check`)
+- [ ] No secrets, temp files, or artifacts staged
+- [ ] Code changes include CHANGELOG.md/documentation
+- [ ] No unresolved issues in your own review
+
+**Note**: Reviewers will check this during Phase 3 anyway, so this is optional. Skip if your changes are ready.
+
+---
 
 ### Phase 1 — Context gathering
 

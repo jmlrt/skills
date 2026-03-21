@@ -1,11 +1,11 @@
 ---
 name: pull-request
-description: Guide pull requests through their complete lifecycle. Create new PRs, iterate on review feedback, and validate before merge. Covers PR template usage, title/body preferences, file validation, security checks, and merge readiness.
+description: Create and update pull requests, then iterate on review feedback. Covers PR templates, title/body conventions, file validation, and addressing reviewer comments.
 ---
 
-# Pull Request Lifecycle
+# Pull Request Workflow (Author)
 
-Guide pull requests through their complete lifecycle: creation, feedback iteration, and merge validation.
+Create and update pull requests as an author: prepare PRs, push for review, then address reviewer feedback.
 
 ---
 
@@ -15,7 +15,8 @@ Guide pull requests through their complete lifecycle: creation, feedback iterati
 |-------|----------|---------|
 | **CREATE** | "create a PR", "make a pull request", "open a PR", "submit for review" | [→ See CREATE section below](#create-mode-new-pr) |
 | **ITERATE** | "address PR review", "fix PR feedback", "address review comments" | [→ See ITERATE section below](#iterate-mode-address-feedback) |
-| **VALIDATE** | "check if ready to merge", "pre-merge validation", "final PR check" | [→ See VALIDATE section below](#validate-mode-pre-merge-checks) |
+
+When your PR is ready to merge, reviewers use the **review-pull-request** skill to validate.
 
 ---
 
@@ -140,10 +141,13 @@ Auto-exclude: `.gitignore` patterns, temp files, virtual envs, build artifacts
 
 ### Step 3: File Validation
 
-Apply validation logic from Shared Validation Patterns section below:
-- Flag Claude artifacts, temp files
-- Warn about untracked files, out-of-scope files
-- Require final confirmation
+Before staging, verify:
+- ⚠️ No Claude artifacts (`.analysis`, `.claude`, `.report`, `.debug`)
+- ⚠️ No temp files (`.tmp`, `.lock`, `.swp`, `~`, `.DS_Store`)
+- ⚠️ No untracked files (should they be staged?)
+- ✅ Files are in-scope (same directory or related)
+
+If uncertain, ask Claude to validate staged files.
 
 ### Step 4: Security & Pre-commit
 
@@ -174,9 +178,12 @@ else
 fi
 ```
 
-### Step 6: Documentation Validation
+### Step 6: Documentation
 
-From Shared Validation Patterns: Warn if code changed but CHANGELOG.md missing
+If code changed (not just docs), ensure:
+- [ ] CHANGELOG.md updated if the repo uses one
+- [ ] README updated for user-facing changes
+- [ ] Function docstrings added/updated
 
 ### Step 7: Commit
 
@@ -306,12 +313,12 @@ grep -rn "if.*> [0-9]\|== ['\"]" src/ | grep -v "test"
 - **CLAUDE.md/settings**: Flag if the PR modifies `CLAUDE.md`, `settings.json`, or permission files — treat as critical
 - **Cross-codebase patterns**: If you flag a pattern, grep for same pattern elsewhere and fix all occurrences
 
-### Step 5: Validate Staged Files
+### Step 5: Verify Staged Files
 
-Apply validation logic from Shared Validation Patterns section below:
-- Flag Claude artifacts, temp files
-- Warn about untracked files
-- Require final confirmation
+Before committing, check:
+- No Claude artifacts or temp files
+- Only intended files are staged
+- If uncertain, unstage and verify
 
 ### Step 6: Security & Tests
 
@@ -354,148 +361,6 @@ Batch resolve all threads using the github skill's batch resolve command.
 
 ---
 
-# VALIDATE Mode: Pre-Merge Checks
+## Next: Request Review
 
-Final pre-merge validation to ensure PR is ready.
-
-## Workflow
-
-1. **Check PR status**: All required checks passing?
-2. **Review comments resolved**: Any unresolved comments?
-3. **Documentation**: CHANGELOG, README, docstrings updated?
-4. **Coverage**: Tests coverage maintained?
-5. **Consistency**: Code style, naming, patterns match?
-
----
-
-## VALIDATE Instructions
-
-### Step 1: PR Status
-
-```bash
-PR=$(gh pr view --json number -q .number)
-gh pr view $PR --json statusCheckRollup -q '.statusCheckRollup[] | {name, status}'
-
-# All must be "PASS" (not FAIL, PENDING, SKIPPED)
-```
-
-### Step 2: Review Status
-
-```bash
-OWNER=$(gh repo view --json owner -q .owner.login)
-REPO=$(gh repo view --json name -q .name)
-
-# Check for unresolved comments
-gh api repos/$OWNER/$REPO/pulls/$PR/comments \
-  --jq '.[] | select(.in_reply_to_id == null) | {path, line, body}'
-
-# Count unresolved review threads
-gh pr view $PR --json comments -q '.comments[] | select(.isResolved == false)' | wc -l
-```
-
-If unresolved comments exist: **STOP** — ask author to address
-
-### Step 3: Documentation
-
-Check that code changes have accompanying documentation:
-- [ ] CHANGELOG.md updated with accurate description
-- [ ] README.md updated if user-facing changes
-- [ ] Docstrings added/updated for new functions
-- [ ] Help text accurate (CLI/config)
-- [ ] No misleading wording or overclaims
-
-### Step 4: Coverage
-
-```bash
-# Verify tests pass and coverage maintained
-make check
-
-# If coverage dropped below threshold: STOP — ask for more tests
-```
-
-### Step 5: Consistency
-
-Verify:
-- Type hints present on public functions
-- Naming conventions consistent (snake_case for Python, etc.)
-- Error messages consistent format
-- Patterns match existing codebase
-- No hardcoded values (use constants)
-- Exception handling specific (not broad `except Exception`)
-
-### Step 6: Merge Decision
-
-✅ **Ready to merge** if:
-- All checks passing
-- No unresolved review comments
-- Documentation complete
-- Coverage maintained
-- Code consistency verified
-
-❌ **Not ready** if anything above fails — ask for fixes
-
----
-
-# Shared Validation Patterns
-
-Reusable validation logic used across CREATE and ITERATE modes.
-
-## File Validation
-
-Applied before committing in both CREATE and ITERATE modes.
-
-```bash
-STAGED=$(git diff --cached --name-only)
-UNTRACKED=$(git ls-files --others --exclude-standard)
-
-# 1. Detect Claude/Analysis artifacts
-SUSPICIOUS=$(echo "$STAGED" | grep -E '\.(analysis|claude|report|debug|txt\.bak)$|\.claude.*|.*\.analysis\..*' || true)
-if [ ! -z "$SUSPICIOUS" ]; then
-  echo "⚠️ Claude artifacts detected: unstage? (y/n)"
-fi
-
-# 2. Detect temp/lock files
-TEMP=$(echo "$STAGED" | grep -E '\.tmp$|\.lock$|\.swp$|~$|\.DS_Store$' || true)
-if [ ! -z "$TEMP" ]; then
-  echo "⚠️ Temp files detected: unstage? (y/n)"
-fi
-
-# 3. Warn about untracked files
-if [ ! -z "$UNTRACKED" ]; then
-  echo "ℹ️ Untracked files exist: OK to skip? (y/n)"
-fi
-
-# 4. Check for out-of-scope files
-FIRST_FILE=$(echo "$STAGED" | head -1)
-SCOPE=$(echo "$FIRST_FILE" | xargs dirname)
-OUT_OF_SCOPE=$(echo "$STAGED" | grep -v "^$SCOPE" | grep -v "CHANGELOG\|README\|\.github" || true)
-if [ ! -z "$OUT_OF_SCOPE" ]; then
-  echo "ℹ️ Out-of-scope files detected: OK? (y/n)"
-fi
-
-# 5. Final confirmation
-echo "Staged files review — proceed? (y/n)"
-```
-
-## Documentation Validation
-
-Applied before committing in both modes.
-
-```bash
-STAGED_FILES=$(git diff --cached --name-only)
-CODE_FILES=$(echo "$STAGED_FILES" | grep -vE '\.(md|txt)$' || true)
-
-# Warn if code changed but CHANGELOG missing
-if [ ! -z "$CODE_FILES" ] && ! echo "$STAGED_FILES" | grep -q "CHANGELOG.md"; then
-  echo "⚠️ Code changed but CHANGELOG.md not staged. Continue? (y/n)"
-fi
-```
-
-## Auto-exclude Rules
-
-Always exclude from commits:
-- `.gitignore` patterns (temp files, build artifacts, virtual envs)
-- Temp files: `*.pyc`, `.DS_Store`, `.cache/`, `.pytest_cache/`
-- Virtual envs: `.venv/`, `venv/`, `env/`
-- Build artifacts: `dist/`, `build/`, `*.egg-info/`
-- Claude artifacts: `*.claude`, `*.analysis`, `*.report`, `*.debug`
+Once your fixes are pushed and comments resolved, request review from a maintainer. They'll use the **review-pull-request** skill to validate merge readiness.

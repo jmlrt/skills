@@ -27,8 +27,8 @@ npx skills add -g jmlrt/skills --skill github --skill review-pull-request
 | Skill | Description | Optional deps |
 |---|---|---|
 | `github` | Manage GitHub issues/PRs/repos using the `gh` CLI. Retrieve context, create/edit issues and PRs, manage workflows, resolve review threads. | `gh` CLI |
-| `pull-request` | Guide pull requests through their complete lifecycle (create → iterate → validate). Covers PR templates, title/body conventions, file validation, review feedback iteration, merge readiness checks. | `gh` CLI |
-| `review-pull-request` | Comprehensive PR review: triage comments, code review, test execution, Jira alignment. Includes CLAUDE.md safety checks and cross-codebase pattern scanning. | `gh` CLI; `jira` skill (optional) |
+| `pull-request` | **Author workflow**: Create and update PRs, then iterate on review feedback. Covers templates, title/body preferences, file validation. | `gh` CLI |
+| `review-pull-request` | **Reviewer workflow**: Validate PR readiness before merge. Triage comments, code review, test execution, Jira alignment, safety checks. | `gh` CLI; `jira` skill (optional) |
 | `python-development` | Production patterns for modern Python development: uv, ruff, ty, make, pre-commit. Type safety, separation of concerns, error handling, test organization. | None (reference only) |
 | `triage-pull-requests` | Batch-review multiple PRs in parallel. Produces a triage table, then posts reviews on decision. | `gh` CLI; `review-pull-request` skill |
 | `jira` | Read Jira tickets and epics using the Atlassian CLI (`acli`). Requires `{JIRA_BASE_URL}` configured. | `acli` CLI |
