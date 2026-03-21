@@ -1,13 +1,14 @@
 ---
 name: python-development
 description: Production patterns for modern Python development (uv, ruff, ty, make, pre-commit)
+allowed-tools: Read, Grep
 ---
 
-# Python Development Skill
+# Python Development Patterns
 
-Production-ready patterns for modern Python development. Built from proven patterns tested in real CLI applications (89%+ coverage, zero type errors, zero circular imports).
+Reference guide for production Python development: tooling, architecture, error handling, and testing patterns.
 
-**Python Version**: 3.13+ | **Status**: Lean & production-tested
+**Python**: 3.11+
 
 ---
 
@@ -116,7 +117,7 @@ tests/
 └── integration/   # Workflow tests
 ```
 
-Coverage target: **89%+ enforced by make test-cov**
+High coverage enforced by `make test-cov`.
 
 ---
 
@@ -152,7 +153,7 @@ pre-commit install      # Install git hooks
 
 1. **Type Safety First** - Every function has type hints, ty catches errors
 2. **Separation of Concerns** - CLI thin wrappers (50-150 lines) + pure core logic
-3. **Test-Driven Quality** - 89%+ coverage minimum, enforced
+3. **Test-Driven Quality** - High coverage target, enforced by `make test-cov`
 4. **Automated Enforcement** - `make check` + pre-commit + CI
 5. **Configuration Over Convention** - All choices in config files
 
@@ -169,4 +170,4 @@ pre-commit install      # Install git hooks
 
 ---
 
-**Version**: Production-Ready | **Python**: 3.13+ | **Test Coverage**: 89%+ enforced
+**Python**: 3.11+ | **Status**: Reference

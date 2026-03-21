@@ -79,7 +79,7 @@ uv python pin 3.13               # Pin project to Python 3.13
 name = "my-project"
 version = "0.1.0"
 description = "My Python project"
-requires-python = ">=3.13"
+requires-python = ">=3.11"
 
 dependencies = [
     "click>=8.1",
@@ -442,7 +442,7 @@ version = "0.1.0"
 description = "My Python project"
 readme = "README.md"
 license = "MIT"
-requires-python = ">=3.13"
+requires-python = ">=3.11"
 authors = [{ name = "Your Name", email = "you@example.com" }]
 classifiers = [
     "Development Status :: 4 - Beta",
