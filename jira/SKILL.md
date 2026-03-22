@@ -1,18 +1,11 @@
 ---
 name: jira
-description: Retrieves Jira ticket and epic context using Atlassian CLI (acli) in read-only mode. Use when the user mentions Jira tickets (e.g., PROJECT-1234), asks for epic child tickets, needs outcomes/acceptance criteria summarized, or wants JQL-based ticket lists via `acli jira workitem view/search`.
-allowed-tools: "Bash(acli:*), Read"
+description: "Retrieves Jira ticket and epic context using Atlassian CLI (acli) in read-only mode. Use when the user mentions Jira tickets (e.g., PROJECT-1234), asks for epic child tickets, needs outcomes/acceptance criteria summarized, or wants JQL-based ticket lists via `acli jira workitem view/search`."
+allowed-tools: "Bash(acli:*), Bash(grep:*), Bash(jq:*), Read"
+argument-hint: [PROJECT-ticket or epic-key]
 ---
 
 # Jira retrieval with `acli`
-
-## Prerequisites
-
-- **acli**: https://developer.atlassian.com/cloud/acli/guides/introduction/
-
-```bash
-which acli || echo "acli not installed: https://developer.atlassian.com/cloud/acli/guides/introduction/"
-```
 
 ## Scope + defaults
 
@@ -56,17 +49,23 @@ acli jira workitem search --jql '"Epic Link" = PROJECT-5679' --json
 
 ## Field selection
 
+**Minimal summary:**
 ```bash
-# Minimal summary
 acli jira workitem view PROJECT-1234 --json --fields 'summary,status,assignee,reporter,priority,labels,components,fixVersions,description'
+```
 
-# Dependency context
+**Dependency context:**
+```bash
 acli jira workitem view PROJECT-1234 --json --fields 'summary,status,issuelinks,subtasks'
+```
 
-# Comment signal (blockers/rollout state)
+**Comment signal (blockers/rollout state):**
+```bash
 acli jira workitem view PROJECT-1234 --json --fields 'summary,status,updated,comment,issuelinks'
+```
 
-# Custom fields / escape hatch
+**Custom fields (escape hatch):**
+```bash
 acli jira workitem view PROJECT-1234 --json --fields '*all'
 ```
 
@@ -78,6 +77,29 @@ When asked "what are the outcomes of the tickets in this epic?":
 2. **For each child ticket**, extract: outcome, acceptance criteria, user/maintainer impact, dependencies.
 3. **Deduplicate** overlapping outcomes.
 4. Produce a short outcomes inventory (1–2 bullets per ticket) and an aggregated deliverable candidate.
+
+## Real-world workflow: Fetch epic outcomes
+
+**Goal**: Summarize what an epic will deliver.
+
+```bash
+# 1. Find epic child tickets
+EPIC="PROJECT-5678"
+acli jira workitem search --jql "parent = $EPIC" --json | \
+  jq -r '.[].key' > /tmp/tickets.txt
+
+# 2. For each ticket, extract outcome and acceptance criteria
+while read ticket; do
+  acli jira workitem view "$ticket" --json --fields \
+    'summary,description,status,assignee' | \
+    jq '{key: .key, summary: .fields.summary, status: .fields.status.name}'
+done < /tmp/tickets.txt
+
+# 3. Optional: extract PR links from comments
+acli jira workitem view $EPIC --json --fields 'comment,issuelinks' | \
+  jq -r '.fields.comment[]? | .body' | \
+  grep -oE 'github.com/[^/]+/[^/]+/pull/[0-9]+' || true
+```
 
 ## Common failure modes + fixes
 
