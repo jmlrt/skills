@@ -70,23 +70,29 @@ gh issue list --repo owner/repo --state open --limit 50
 
 ### Issue write operations
 
+**Create issue:**
 ```bash
-# Create issue
 gh issue create --title "<title>" --body "<body>"
 gh issue create --title "<title>" --body "<body>" --label <label1>,<label2>
 gh issue create --title "<title>" --body "<body>" --assignee <username>
+```
 
-# Edit issue
+**Edit issue:**
+```bash
 gh issue edit <ISSUE_NUMBER> --title "<new-title>"
 gh issue edit <ISSUE_NUMBER> --body "<new-body>"
 gh issue edit <ISSUE_NUMBER> --add-label <label1>,<label2>
 gh issue edit <ISSUE_NUMBER> --add-assignee <user1>,<user2>
+```
 
-# Close issue
+**Close issue:**
+```bash
 gh issue close <ISSUE_NUMBER>
 gh issue close <ISSUE_NUMBER> --reason "completed"
+```
 
-# Add comment
+**Add comment:**
+```bash
 gh issue comment <ISSUE_NUMBER> --body "<comment-text>"
 ```
 
@@ -94,45 +100,53 @@ gh issue comment <ISSUE_NUMBER> --body "<comment-text>"
 
 ### Manage workflows
 
+**List workflows:**
 ```bash
-# List workflows
 gh workflow list
+```
 
-# Enable workflow
+**Enable/disable workflows:**
+```bash
 gh workflow enable <workflow-file-name-or-id>
-
-# Disable workflow
 gh workflow disable <workflow-file-name-or-id>
+```
 
-# Trigger workflow manually
+**Trigger workflow manually:**
+```bash
 gh workflow run <workflow-file-name-or-id>
-
-# Trigger with inputs
 gh workflow run <workflow-file-name-or-id> -f <input-name>=<input-value>
 ```
 
 ### View and control runs
 
+**List workflow runs:**
 ```bash
-# List workflow runs
 gh run list
 gh run list --workflow <workflow-name-or-id>
 gh run list --status failure
+```
 
-# Filter by commit
+**Filter by commit:**
+```bash
 COMMIT_SHA=$(git rev-parse HEAD)
 gh run list --head-sha $COMMIT_SHA
+```
 
-# View run details
+**View run details:**
+```bash
 gh run view <run-id>
 gh run view <run-id> --json status,conclusion,createdAt,updatedAt,headBranch
+```
 
-# View logs
+**View logs:**
+```bash
 gh run view <run-id> --log
 gh run view <run-id> --log-failed
 gh run download <run-id> -D <output-dir>
+```
 
-# List jobs in run
+**List jobs in run:**
+```bash
 gh run view <run-id> --json jobs --jq '.jobs[] | {name, status, conclusion}'
 
 # Rerun failed run

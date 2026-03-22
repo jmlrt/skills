@@ -39,7 +39,7 @@ Determine mode before starting. The agent picks based on signals; user can overr
 
 Work through all phases. Phases 1–2 can run in parallel using batch tool calls.
 
-### Phase 0 — Optional: Author self-check (before review)
+### Phase 0: Author self-check (before review)
 
 If you're an author preparing for review, consider checking before requesting review:
 
@@ -52,7 +52,7 @@ If you're an author preparing for review, consider checking before requesting re
 
 ---
 
-### Phase 1 — Context gathering
+### Phase 1: Context gathering
 
 Use the **github** skill for all GitHub reads:
 - PR metadata, diff, all review comments including **outdated** threads
@@ -65,7 +65,7 @@ Check workspace `CLAUDE.md` / `AGENTS.md` for a `## PR Review` section with repo
 
 **Cross-repo impact** (pipelines, scripts, configs referenced by the PR): check for a local clone before fetching via `gh api`. Local reads are faster and work offline.
 
-### Phase 2 — Comment triage
+### Phase 2: Comment triage
 
 For each existing review comment thread (including outdated):
 - Check if the issue is addressed in the latest diff
@@ -73,7 +73,7 @@ For each existing review comment thread (including outdated):
 
 Present the triage list to the user before taking any action. Only resolve threads after explicit user approval. Use the **github** skill's resolve-thread command.
 
-### Phase 3 — Independent code review
+### Phase 3: Independent code review
 
 Review the diff for:
 - **Correctness**: logic bugs, edge cases, off-by-one errors
@@ -91,23 +91,23 @@ Review the diff for:
 
 Inline comment placement rule: comment only on lines **actually changed by the PR**, not on unchanged context lines visible in the diff hunk.
 
-### Phase 4 — Test execution
+### Phase 4: Test execution
 
 Run unit tests for the changed code. Use the repo's test runner (check `CLAUDE.md` / `AGENTS.md`). Report pass/fail with output. If tests fail, investigate and note whether it is a pre-existing failure or introduced by this PR.
 
-### Phase 5 — Manual test assessment
+### Phase 5: Manual test assessment
 
 - Review what manual tests are claimed in the PR description and comments
 - Identify gaps; if they can be filled without the PR author, do it
 - Propose any remaining manual tests with exact commands
 
-### Phase 6 — Jira / issue alignment
+### Phase 6: Jira / issue alignment
 
 If a Jira ticket or GitHub issue is linked **and the jira skill is available**:
 - Compare PR changes against the ticket's acceptance criteria / expected outputs
 - Flag any ticket requirements not covered by the PR
 
-### Phase 7 — Final output
+### Phase 7: Final output
 
 **Severity labels**:
 - **Critical** (must fix before merge)

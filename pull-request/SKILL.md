@@ -107,7 +107,7 @@ Closes #123
 
 ## CREATE Instructions
 
-### Step 1: Setup
+### Phase 1: Setup
 
 ```bash
 git fetch origin
@@ -132,7 +132,7 @@ fi
 echo "✅ Up-to-date with main"
 ```
 
-### Step 2: File Selection
+### Phase 2: File Selection
 
 ```bash
 git status --porcelain
@@ -142,7 +142,7 @@ git status --porcelain
 
 Auto-exclude: `.gitignore` patterns, temp files, virtual envs, build artifacts
 
-### Step 3: File Validation
+### Phase 3: File Validation
 
 Before staging, verify:
 - ⚠️ No Claude artifacts (`.analysis`, `.claude`, `.report`, `.debug`)
@@ -152,7 +152,7 @@ Before staging, verify:
 
 If uncertain, ask Claude to validate staged files.
 
-### Step 4: Security & Pre-commit
+### Phase 4: Security & Pre-commit
 
 ```bash
 # Check for secrets
@@ -168,7 +168,7 @@ make pre-commit || {
 }
 ```
 
-### Step 5: Tests
+### Phase 5: Tests
 
 ```bash
 STAGED=$(git diff --cached --name-only)
@@ -181,14 +181,14 @@ else
 fi
 ```
 
-### Step 6: Documentation
+### Phase 6: Documentation
 
 If code changed (not just docs), ensure:
 - [ ] CHANGELOG.md updated if the repo uses one
 - [ ] README updated for user-facing changes
 - [ ] Function docstrings added/updated
 
-### Step 7: Commit
+### Phase 7: Commit
 
 Generate commit message summarizing changes:
 
@@ -203,7 +203,7 @@ Co-Authored-By: Claude Code <noreply@anthropic.com>
 
 Stage in `COMMIT_MESSAGE.md`, commit with `git commit -F COMMIT_MESSAGE.md`
 
-### Step 8: PR Description
+### Phase 8: PR Description
 
 Generate from commit message and changed files:
 
@@ -221,7 +221,7 @@ Generate from commit message and changed files:
 
 Save to `PR_DESCRIPTION.md`
 
-### Step 9: Push and Create PR
+### Phase 9: Push and Create PR
 
 ```bash
 git push -u origin $FEATURE_BRANCH
@@ -234,7 +234,7 @@ gh pr create \
   --body-file PR_DESCRIPTION.md
 ```
 
-### Step 10: Cleanup
+### Phase 10: Cleanup
 
 ```bash
 rm -f COMMIT_MESSAGE.md PR_DESCRIPTION.md
@@ -260,7 +260,7 @@ Address review feedback on an existing PR.
 
 ## ITERATE Instructions
 
-### Step 1: Auto-detect PR
+### Phase 1: Auto-detect PR
 
 ```bash
 PR=$(gh pr view --json number -q .number 2>/dev/null) || {
@@ -270,7 +270,7 @@ PR=$(gh pr view --json number -q .number 2>/dev/null) || {
 echo "✅ Found PR #$PR"
 ```
 
-### Step 2: Fetch Comments
+### Phase 2: Fetch Comments
 
 ```bash
 OWNER=$(gh repo view --json owner -q .owner.login)
@@ -279,7 +279,7 @@ gh api repos/$OWNER/$REPO/pulls/$PR/comments \
   --jq '.[] | {id, path, line, body}' > /tmp/pr_comments.json
 ```
 
-### Step 3: Categorize Comments
+### Phase 3: Categorize Comments
 
 Triage each comment as:
 - **Must-fix**: Safety, correctness, required standards
@@ -288,7 +288,7 @@ Triage each comment as:
 
 Summarize for user approval: "Fix X must-fixes and Y enhancements? (y/n)"
 
-### Step 4: Apply Fixes
+### Phase 4: Apply Fixes
 
 For each must-fix and enhancement:
 1. Read affected file (use Read tool)
@@ -316,14 +316,14 @@ grep -rn "if.*> [0-9]\|== ['\"]" src/ | grep -v "test"
 - **CLAUDE.md/settings**: Flag if the PR modifies `CLAUDE.md`, `settings.json`, or permission files — treat as critical
 - **Cross-codebase patterns**: If you flag a pattern, grep for same pattern elsewhere and fix all occurrences
 
-### Step 5: Verify Staged Files
+### Phase 5: Verify Staged Files
 
 Before committing, check:
 - No Claude artifacts or temp files
 - Only intended files are staged
 - If uncertain, unstage and verify
 
-### Step 6: Security & Tests
+### Phase 6: Security & Tests
 
 Same checks as CREATE mode:
 - Secrets check
@@ -331,7 +331,7 @@ Same checks as CREATE mode:
 - Tests (skip docs-only)
 - Documentation validation
 
-### Step 7: Commit & Push
+### Phase 7: Commit & Push
 
 ```bash
 git commit -m "fix: address review feedback
@@ -342,7 +342,7 @@ git commit -m "fix: address review feedback
 git push origin $(git branch --show-current)
 ```
 
-### Step 8: Resolve Comments
+### Phase 8: Resolve Comments
 
 After fixes are pushed, mark comments as resolved:
 

@@ -57,17 +57,23 @@ acli jira workitem search --jql '"Epic Link" = PROJECT-5679' --json
 
 ## Field selection
 
+**Minimal summary:**
 ```bash
-# Minimal summary
 acli jira workitem view PROJECT-1234 --json --fields 'summary,status,assignee,reporter,priority,labels,components,fixVersions,description'
+```
 
-# Dependency context
+**Dependency context:**
+```bash
 acli jira workitem view PROJECT-1234 --json --fields 'summary,status,issuelinks,subtasks'
+```
 
-# Comment signal (blockers/rollout state)
+**Comment signal (blockers/rollout state):**
+```bash
 acli jira workitem view PROJECT-1234 --json --fields 'summary,status,updated,comment,issuelinks'
+```
 
-# Custom fields / escape hatch
+**Custom fields (escape hatch):**
+```bash
 acli jira workitem view PROJECT-1234 --json --fields '*all'
 ```
 

@@ -22,14 +22,15 @@ Accepts any mix of:
 If the user asks to "review my assigned PRs" without listing them, discover candidates and then filter to **direct** review
 requests (you as a User, not just your team) and **exclude drafts**:
 
-- Candidate list (infer owner from current git remote, or prompt user if no git context):
+**Candidate list** (infer owner from current git remote, or prompt user if no git context):
 
+Infer owner from current repo:
 ```bash
-# Infer owner from current repo
 OWNER="$(gh repo view --json owner --jq .owner.login 2>/dev/null)"
-# Fall back to prompting user if not in a git repo
 gh search prs --owner="${OWNER}" --state=open --review-requested=@me --sort updated --order desc --json number,title,url,repository --limit 50
 ```
+
+If not in a git repo, prompt user for owner and use the search command above.
 
 - Filter per PR (keep only when `isDraft == false` AND `reviewRequests` contains your login as a `User`):
 
@@ -45,7 +46,7 @@ gh pr view <n> --repo <owner/repo> --json reviewRequests --jq \
 
 Pass the resulting explicit `owner/repo#n` list into Phase 1.
 
-## Phase 1 — Parallel dispatch
+## Phase 1: Parallel dispatch
 
 Launch **one subagent per PR in a single message batch** using the Task tool. Each subagent prompt must:
 - Read and follow the **review-pull-request** skill (review methodology, backport rules, disclaimer rule)
@@ -55,7 +56,7 @@ Launch **one subagent per PR in a single message batch** using the Task tool. Ea
 
 **Subagent permission failure**: Subagents inherit permissions from `settings.json` only — not from tools approved interactively in the parent session. Required rules (`Bash(gh:*)`, `Read`) must be in `settings.json`. If subagents still fail, fall back to running each review directly in the main conversation sequentially. The review methodology and output format are the same.
 
-## Phase 2 — Summary
+## Phase 2: Summary
 
 After all subagents return, present a compact table:
 
@@ -71,7 +72,7 @@ Always include the PR URL as a markdown link in the PR column.
 
 Then list findings per PR (Critical → Suggestions → NITs → Improvements), aligning with the NIT guidelines in **review-pull-request**. Ask the user for a decision per PR.
 
-## Phase 3 — Decisions
+## Phase 3: Decisions
 
 Valid responses (blanket or per-PR):
 - `approve`, `approve all that look OK`
@@ -83,7 +84,7 @@ Valid responses (blanket or per-PR):
 
 **Post nothing without an explicit decision.**
 
-## Phase 4 — Post reviews
+## Phase 4: Post reviews
 
 Use the `### Posting reviews` commands from the **github** skill. Apply the disclaimer rule from the **review-pull-request** skill.
 
