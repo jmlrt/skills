@@ -63,12 +63,16 @@ Creates a new pull request with comprehensive safety checks.
 
 ## Body Preferences
 
-- **Describe your changes**: Short **bullet list**. One bullet per main change; concise phrasing.
-- When the change has **measurable impact** (performance, which jobs/hooks run): add a short **impact** block with before/after or what is skipped. Use **lists and sub-bullets**, not tables.
+**For feature/fix PRs**: Short **bullet list**. One bullet per main change; concise phrasing.
+
+**For refactoring/architectural PRs**: High-level **narrative format** (Problem → Solution → Impact) explaining why the changes matter. Include impact metrics or scope.
+
+**Always include**:
+- When the change has **measurable impact** (performance, reduced lines, security fixes): add a short **impact** block with before/after or what is skipped.
 - **Issue ticket**: Include "Issue ticket number and link"; use N/A when there is no ticket.
 - **Checklist**: Use `- [ ]` or `- [x]` per actual state; keep the template checklist and links at the bottom.
 
-### Example PR body structure
+### Example PR body (feature/fix)
 
 ```markdown
 ## Describe your changes
@@ -85,8 +89,27 @@ Creates a new pull request with comprehensive safety checks.
 Closes #123
 
 ## Checklist before requesting a review
-- [ ] I have read the Contributing guide
 - [x] Tests pass locally
+```
+
+### Example PR body (refactoring/architectural)
+
+```markdown
+## Problem
+
+[1-2 sentences: What's broken, confusing, or suboptimal]
+
+## Solution
+
+[How you're fixing it, organized by theme]
+
+## Impact
+
+[User/maintainer/operational benefits]
+
+## Metrics
+
+- [Before/after stats: lines, complexity, performance, security]
 ```
 
 ## CREATE Instructions
