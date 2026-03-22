@@ -1,187 +1,151 @@
 ---
 name: python-development
-description: Production patterns for Python projects - greenfield defaults + brownfield flexibility
-allowed-tools: Read, Grep
+description: Write, maintain, and review Python code following user's style and preferences
+allowed-tools: Read, Grep, Glob, Edit, Write
+user-invocable: false
 ---
 
-# Python Development: Greenfield & Brownfield
+# Python Development
 
-Two-tier guidance: **Greenfield defaults for new projects** (consistent, modern), **Brownfield flexibility for legacy projects** (pragmatic, non-blocking).
-
-**Python**: 3.12+ (greenfield default) | **Status**: Proven in clipmd, englog, spotfm
-
----
-
-## Quick Start: New Project (Greenfield)?
-
-Follow [greenfield defaults](#greenfield-defaults) to stay consistent with clipmd/englog:
-
-```bash
-# 1. Read the greenfield template
-# 2. Copy pyproject.toml + Makefile + .pre-commit-config.yaml templates
-# 3. Run: make install && make check
-# Done.
-```
-
-**Or inheriting legacy code?** → Jump to [Brownfield Projects](#brownfield-projects)
+Apply this skill when writing, maintaining, or reviewing Python code.
 
 ---
 
-## Greenfield Defaults
+## Mode Detection
 
-Use this **by default for all new projects**. These ensure consistency across clipmd and englog:
+Detect the mode from the user's request before acting:
 
-### Python Version
-- **Minimum**: 3.12 (3.13 preferred if all dependencies support)
-- **Pin in 2 places**:
-  - `pyproject.toml`: `requires-python = ">=3.12"`
-  - `.python-version`: `3.12` (for uv Python management)
-
-### Build System
-```toml
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-```
-
-### Tooling Stack (Exact)
-- **uv**: Package management (replaces pip/pipenv/poetry)
-- **ruff**: Linting + formatting (line-length: 100)
-- **ty**: Type checking (strict mode)
-- **pytest**: Testing
-- **pre-commit**: Git hooks
-- **make**: Task automation
-
-All specified in `pyproject.toml` under `[dependency-groups] dev = [...]`
-
-### Project Structure
-```
-my-project/
-├── src/
-│   └── my_project/
-│       ├── cli.py              (thin CLI wrapper)
-│       ├── commands/           (command submodules)
-│       │   └── example.py
-│       └── core/               (pure business logic)
-│           └── processor.py
-├── tests/
-│   ├── test_cli.py            (CLI interface tests)
-│   └── test_processor.py       (core logic tests)
-├── pyproject.toml
-├── Makefile
-├── .pre-commit-config.yaml
-├── .python-version            (pin minor version)
-└── README.md
-```
-
-### Use Cases (Flat or Structured Tests?)
-
-**If CLI tool** (like englog, clipmd):
-- All tests in `tests/` directory, flat structure
-- Use `conftest.py` for shared fixtures
-- No artificial unit/integration split (organize by concern, not by tier)
-
-**If library** (like spotfm):
-- No `cli.py` unless you offer a CLI too
-- All tests in `tests/`, name by feature: `test_api.py`, `test_utils.py`
-- Use fixtures for mocking external dependencies
-
-See templates in [tooling.md](tooling.md).
+| Signal | Mode |
+|---|---|
+| "write", "create", "add", "scaffold", "implement", "new" | **WRITE** |
+| "fix", "refactor", "update", "change", "migrate", "improve" | **MAINTAIN** |
+| "review", "check", "audit", "look at", "what do you think" | **REVIEW** |
 
 ---
 
-## Brownfield Projects
+## WRITE Mode
 
-Working with legacy code? **Don't retrofit the greenfield defaults.** Instead, make **pragmatic choices**:
+### Step 1: Greenfield or brownfield?
 
-### Decision Tree
+**Greenfield** (new project or new module in a greenfield project):
+- Use templates from [tooling.md](tooling.md) verbatim — don't approximate
+- Apply src/ layout, hatchling build system, full tooling stack
+- Apply all rules below from the start
 
-**Q: Does the project already use a build system?**
-- ✅ Yes → Keep it (setup.cfg, Poetry, etc.)
-- ❌ No → Migrate to hatchling (one-time effort worth it)
+**Brownfield** (inheriting existing code):
+- Read existing code first with Read/Grep before writing anything
+- Match existing patterns — don't retrofit greenfield defaults
+- Use the brownfield decision tree at the bottom of this file
 
-**Q: Which Python version?**
-- 3.11 or older → Keep it, update when dependencies support it
-- 3.12+ → Align with greenfield default (3.12+)
+### Step 2: Apply these rules when writing any code
 
-**Q: Which CLI framework?**
-- Click (clipmd pattern) → Already greenfield-aligned
-- Typer (englog pattern) → Already greenfield-aligned
-- argparse or custom → Refactor only if actively developing
-- No CLI (library) → Leave as-is
+**Functions and modules:**
+- Every function and module gets a docstring summary (one line is enough; add more lines only when behavior is non-obvious)
+- Every function gets full type hints using modern syntax (`str | None`, `list[str]`, not `Optional`, not `Union`)
+- See [code-style.md](code-style.md) for all style rules
 
-**Q: Does code use type hints?**
-- 80%+ coverage → Run `ty check --strict`
-- <80% coverage → Use `ruff check` for lint only, don't enforce `ty`
-- 0% coverage (like spotfm) → Run tests only, skip type checking
+**Error handling:**
+- Raise domain exceptions in core logic, catch at the CLI layer — never both
+- Always chain exceptions: `raise AppError("msg") from e`
+- See [patterns.md](patterns.md) for exception hierarchy and CLI/core separation
 
-**Q: Test organization?**
-- Complex project with 50+ tests → Consider unit/integration split
-- <50 tests → Keep flat `test_*.py`
+**Structure:**
+- Separate CLI layer (parse args + display output) from core layer (pure logic, no CLI imports)
+- Use `pathlib.Path` for all file operations — never `os.path` or string concatenation
+- Use `@dataclass` for any domain model with 2+ fields
 
-### Brownfield Minimal Setup
+**Output:**
+- Default to `typer.echo` — don't add Rich or logging unless the user asks for a `--verbose` flag
 
-If working on legacy code, ensure **just these**:
+**Config:**
+- Use `tomllib` (stdlib) + TOML file — not Pydantic, not env vars
+- Env vars only for secrets or CI overrides
 
+**Tests:**
+- Class-based: `class TestFoo`, `def test_scenario`
+- `conftest.py` for shared fixtures
+- `tmp_path` for filesystem, `monkeypatch` for env vars
+- Test core logic directly; test CLI only for argument parsing and exit codes
+
+---
+
+## MAINTAIN Mode
+
+1. **Read before writing** — use Read/Grep to understand the existing code
+2. **Match existing patterns** — preserve the style even if it differs from greenfield defaults
+3. **Run checks after editing** — ask the user to run `make check` to validate
+4. **Don't change tooling** unless the user explicitly asks
+
+For brownfield codebases: apply only the brownfield decision tree below.
+
+---
+
+## REVIEW Mode
+
+Go through the code and report findings in two categories:
+
+### Blockers (must fix)
+- [ ] Bare `except:` or `except Exception` without re-raising
+- [ ] Unused imports or dead code
+- [ ] Secrets or credentials hardcoded in source
+
+### Nits (suggest, don't block)
+- [ ] Missing type hints on function signatures
+- [ ] Missing docstrings on functions or modules
+- [ ] Hardcoded values that should be module-level constants or config
+- [ ] Exception not chained with `from e` when re-raising
+- [ ] `os.path` or string paths instead of `pathlib.Path`
+- [ ] Mutable default arguments (`def f(x=[])`)
+- [ ] Wrong exception type (raising base `Exception` instead of domain-specific)
+- [ ] Tests touching real filesystem or env vars without `monkeypatch`/`tmp_path`
+
+When a blocker is found, grep for the same pattern across the codebase and report all instances.
+
+---
+
+## Brownfield Decision Tree
+
+**Build system?**
+- Exists (Poetry, setup.cfg, etc.) → keep it
+- Missing → migrate to hatchling
+
+**Python version?**
+- 3.11 or older → keep it, don't force upgrade
+- 3.12+ → align with greenfield defaults
+
+**CLI framework?**
+- Click or Typer → already aligned, keep it
+- argparse or custom → refactor only if actively developing
+- No CLI → leave as-is
+
+**Type hints?**
+- 80%+ coverage → run `ty check --strict`
+- <80% → run `ruff check` only, skip ty
+- 0% → run tests only
+
+**Test count?**
+- 50+ tests → consider unit/cli split
+- <50 → keep flat `tests/` directory
+
+**Minimal acceptable setup for any brownfield project:**
 ```makefile
-make install    # Install dependencies
-make test       # Run tests
-make lint       # Check code style
-make check      # All of above
+make install   # install deps
+make test      # run tests
+make lint      # check style
+make check     # all of the above
 ```
 
-Don't force the full greenfield stack if:
-- It's unmaintained code you're patching
-- The project was greenfield when started but has diverged
-- You're fixing a bug in 30 minutes and moving on
-
 ---
 
-## Templates
+## Greenfield Checklist
 
-See [tooling.md](tooling.md) for:
-- **Greenfield pyproject.toml** (hatchling + dependency-groups)
-- **Greenfield Makefile** (all targets)
-- **Greenfield .pre-commit-config.yaml** (hooks)
-- **Brownfield quick Makefile** (minimal targets)
-
-See [cli-patterns.md](cli-patterns.md) for:
-- Separation of concerns (CLI thin wrapper)
-- TYPE_CHECKING guard pattern (for circular imports)
-- Testing both core logic + CLI
-
-See [error-handling.md](error-handling.md) for:
-- Result dataclasses (expected failures)
-- Exception hierarchy (bugs)
-
----
-
-## When to Deviate from Greenfield Defaults
-
-**Don't use greenfield defaults if**:
-- Project dependencies don't support Python 3.12+
-- Team standardized on different tooling (respect existing choice)
-- Inheriting unmaintained brownfield code (minimize changes)
-
-**Do use greenfield defaults if**:
-- Starting a new project
-- Modernizing an active project
-- Adding new modules to existing greenfield project
-
----
-
-## Checklist: New Greenfield Project
-
-- [ ] Python 3.12+ in `.python-version` and `pyproject.toml`
-- [ ] hatchling build system configured
-- [ ] Makefile with: install, test, test-cov, lint, format, check, clean
-- [ ] pyproject.toml with `[dependency-groups] dev = [...]` (not `[project.optional-dependencies]`)
+- [ ] `.python-version` set to `3.12`
+- [ ] `pyproject.toml` with hatchling, `requires-python = ">=3.12"`, `[dependency-groups] dev`
+- [ ] `Makefile` with: `install`, `test`, `test-v`, `lint`, `format`, `fix`, `typecheck`, `check`, `clean`
 - [ ] `.pre-commit-config.yaml` with ruff + ty hooks
-- [ ] `src/my_project/` structure with `cli.py`, `commands/`, `core/`
-- [ ] `tests/` with `conftest.py` and `test_*.py` files
-- [ ] Run `make install && make check` before first commit
-- [ ] `pre-commit install` to enable git hooks
+- [ ] `src/my_project/` with `cli.py`, `commands/`, `core/`
+- [ ] `tests/` with `conftest.py`
+- [ ] `make install && make check` passes before first commit
+- [ ] `pre-commit install` enabled
 
----
-
-**Python**: 3.12+ (greenfield) | **Status**: Reference
+See [tooling.md](tooling.md) for copy-paste templates.

@@ -24,8 +24,8 @@ authors = [{name = "Your Name", email = "you@example.com"}]
 
 dependencies = [
     # Add your runtime dependencies here
-    "click>=8.1",        # if building a CLI
-    "rich>=13.9",        # for console output
+    "typer>=0.12",       # if building a CLI
+    "rich>=13.9",        # for console output (optional, only if --verbose flag needed)
 ]
 
 [project.scripts]
@@ -152,45 +152,6 @@ make check
 # You're ready
 git add .
 git commit -m "Initial project setup"
-```
-
----
-
-## Key Commands
-
-### uv (Package Management)
-```bash
-uv sync              # Install from pyproject.toml
-uv run pytest        # Run tests in project venv
-uv run ruff check    # Run linter
-uv python pin 3.12   # Pin Python version project-wide
-```
-
-### ruff (Lint + Format)
-```bash
-ruff check src/      # Find style issues
-ruff check --fix     # Auto-fix style
-ruff format src/     # Format code
-```
-
-### ty (Type Checking)
-```bash
-ty check src/        # Check types
-```
-
-### pytest (Testing)
-```bash
-pytest               # Run all tests
-pytest tests/test_foo.py  # Run specific test file
-pytest -k test_name  # Run tests matching pattern
-pytest --cov        # Run with coverage report
-```
-
-### pre-commit (Git Hooks)
-```bash
-pre-commit install   # Install hooks in .git
-pre-commit run --all-files  # Run hooks manually
-pre-commit autoupdate  # Update hook versions
 ```
 
 ---
