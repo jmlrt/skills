@@ -2,6 +2,19 @@
 
 Reference for all style rules. Apply these when writing or reviewing Python code.
 
+## Quick Navigation
+
+- [Type Hints](#type-hints) — Modern syntax (str | None, not Optional)
+- [Docstrings](#docstrings) — One-liners only
+- [Imports](#imports) — Standard library → local → third-party grouping
+- [Paths](#paths) — Always use pathlib.Path, never os.path
+- [Module-Level Constants](#module-level-constants) — UPPER_SNAKE_CASE
+- [Private Helpers](#private-helpers) — _prefix convention
+- [Dataclasses](#dataclasses) — For models with 2+ fields
+- [Exception Chaining](#exception-chaining) — Always use `raise ... from e`
+- [__init__.py](#__init__py) — Namespace packages and exports
+- [Config Pattern](#config-pattern) — TOML + tomllib or Pydantic
+
 ---
 
 ## Type Hints
@@ -138,20 +151,12 @@ class TimerEntry:
 
 ## Exception Chaining
 
-Always chain with `from e` when catching and re-raising.
+For complete exception handling patterns and hierarchy, see [patterns.md: Exception Hierarchy](patterns.md#exception-hierarchy).
+
+**Rule**: Always chain with `from e` when catching and re-raising — preserves the original traceback:
 
 ```python
-# ✅ Correct
-try:
-    data = tomllib.load(f)
-except tomllib.TOMLDecodeError as e:
-    raise ConfigError(f"Invalid config: {path}") from e
-
-# ❌ Wrong — loses original traceback
-try:
-    data = tomllib.load(f)
-except tomllib.TOMLDecodeError as e:
-    raise ConfigError(f"Invalid config: {path}")
+raise ConfigError(f"Invalid config: {path}") from e
 ```
 
 ---

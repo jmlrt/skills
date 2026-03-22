@@ -2,6 +2,15 @@
 
 Core patterns for CLI structure, error handling, and testing.
 
+## Quick Navigation
+
+- [Verbosity & Debug Logging](#verbosity--rich-logging) — --verbose flag with Rich + logging
+- [CLI / Core Separation](#cli--core-separation) — Testable core logic, thin CLI wrapper
+- [Exception Hierarchy](#exception-hierarchy) — Domain errors (AppError) vs. bugs (Exception)
+- [Batch Result Pattern](#batch-result-pattern) — Process multiple items with partial success
+- [Testing Patterns](#testing-patterns) — Unit tests + CLI argument parsing tests
+- [TYPE_CHECKING Guard](#type_checking-guard) — Solve circular imports without runtime cost
+
 ---
 
 ## Verbosity / Rich Logging
@@ -93,6 +102,8 @@ def process(path: Path) -> None:
         raise typer.Exit(1)
 ```
 
+**See also:** [code-style.md: Dataclasses](code-style.md#dataclasses) and [code-style.md: Paths](code-style.md#paths) for style rules.
+
 ---
 
 ## Exception Hierarchy
@@ -137,6 +148,8 @@ try:
 except Exception:
     pass
 ```
+
+**See also:** [code-style.md: Exception Chaining](code-style.md#exception-chaining) for the style rule.
 
 ---
 

@@ -2,6 +2,13 @@
 
 Copy-paste templates for new projects. For brownfield guidance, see SKILL.md.
 
+## Quick Navigation
+
+- [pyproject.toml Template](#greenfield-pyprojecttom) — hatchling, uv, dependency-groups
+- [Makefile Template](#greenfield-makefile) — install, test, lint, typecheck, format, check
+- [.pre-commit-config.yaml](#pre-commit-hooks) — ruff + ty enforcement
+- [Brownfield Minimal Makefile](#brownfield-minimal-makefile) — works with any project
+
 ---
 
 ## Greenfield pyproject.toml
