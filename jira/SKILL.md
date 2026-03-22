@@ -78,6 +78,29 @@ When asked "what are the outcomes of the tickets in this epic?":
 3. **Deduplicate** overlapping outcomes.
 4. Produce a short outcomes inventory (1–2 bullets per ticket) and an aggregated deliverable candidate.
 
+## Real-world workflow: Fetch epic outcomes
+
+**Goal**: Summarize what an epic will deliver.
+
+```bash
+# 1. Find epic child tickets
+EPIC="PROJECT-5678"
+acli jira workitem search --jql "parent = $EPIC" --json | \
+  jq -r '.[].key' > /tmp/tickets.txt
+
+# 2. For each ticket, extract outcome and acceptance criteria
+while read ticket; do
+  acli jira workitem view "$ticket" --json --fields \
+    'summary,description,status,assignee' | \
+    jq '{key: .key, summary: .fields.summary, status: .fields.status.name}'
+done < /tmp/tickets.txt
+
+# 3. Optional: extract PR links from comments
+acli jira workitem view $EPIC --json --fields 'comment,issuelinks' | \
+  jq -r '.fields.comment[]? | .body' | \
+  grep -oE 'github.com/[^/]+/[^/]+/pull/[0-9]+' || true
+```
+
 ## Common failure modes + fixes
 
 - **Field not allowed / not found**: remove the field; retry; only use `'*all'` when needed.

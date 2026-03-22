@@ -85,6 +85,32 @@ bk build view <build-number> --pipeline <org>/<pipeline> --web
 - **Prefer `jq` over Python** for simple parsing: `bk build list -p org/pipeline -o json | jq -r '.[].state'`
 - Short flags: `-p` (pipeline), `-b` (branch), `-m` (message), `-c` (commit), `-e` (env), `-w` (web)
 
+## Real-world workflow: Trigger build and monitor
+
+**Goal**: Trigger a build, check status, and inspect logs if failed.
+
+```bash
+# 1. Trigger build on current branch
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+BUILD=$(bk build create --pipeline org/my-pipeline --branch $BRANCH --web \
+  | jq -r '.id')
+
+echo "Build started: https://buildkite.com/org/my-pipeline/builds/$BUILD"
+
+# 2. Poll status (simple polling, replace with proper wait-for-build if available)
+while true; do
+  STATUS=$(bk build view $BUILD --pipeline org/my-pipeline -o json | jq -r '.state')
+  echo "Status: $STATUS"
+  [ "$STATUS" = "passed" ] || [ "$STATUS" = "failed" ] && break
+  sleep 5
+done
+
+# 3. If failed, download logs
+if [ "$STATUS" = "failed" ]; then
+  bk build view $BUILD --pipeline org/my-pipeline --log-failed | head -50
+fi
+```
+
 ## Sandbox / Permissions
 
 **Always use `required_permissions: ["all"]`** — `["network"]` is NOT sufficient: `bk` fails with a TLS certificate error inside the sandbox even with network access enabled.
