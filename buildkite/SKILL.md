@@ -1,7 +1,7 @@
 ---
 name: buildkite
 description: "Interact with Buildkite using the bk CLI. Use when the user wants to trigger builds, check build status, list pipelines, view build logs, or perform any Buildkite operations from the command line."
-allowed-tools: "Bash(bk:*), Bash(jq:*), Read"
+allowed-tools: "Bash(bk:*), Bash(git:*), Bash(grep:*), Bash(sed:*), Bash(jq:*), Read"
 argument-hint: [pipeline-slug or build-number]
 disable-model-invocation: true
 ---

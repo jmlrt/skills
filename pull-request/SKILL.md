@@ -1,7 +1,7 @@
 ---
 name: pull-request
 description: "Create and update pull requests as an author. Use when you're ready to propose changes: creates PRs with comprehensive file validation, tests, commit messages, and PR descriptions. Also guides addressing reviewer feedback through iterative fixes and comment resolution."
-allowed-tools: "Bash(git:*), Bash(gh:*), Read, Edit, Write, Grep, Glob, AskUserQuestion"
+allowed-tools: "Bash(git:*), Bash(gh:*), Bash(grep:*), Bash(jq:*), Bash(make:*), Read, Edit, Write, Glob, AskUserQuestion"
 argument-hint: [branch-name]
 disable-model-invocation: true
 ---

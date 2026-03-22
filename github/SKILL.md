@@ -1,7 +1,7 @@
 ---
 name: github
 description: "Manages GitHub issues/PRs/repos using GitHub CLI (gh). Retrieve context, create/edit issues and PRs, manage workflows, and resolve review threads. Use when GitHub issues/PRs are mentioned, when you need details for planning, or when managing PR/issue workflows."
-allowed-tools: "Bash(gh:*), Read"
+allowed-tools: "Bash(git:*), Bash(gh:*), Bash(jq:*), Read"
 argument-hint: [issue-number or owner/repo#number]
 user-invocable: false
 ---
