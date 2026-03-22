@@ -1,7 +1,7 @@
 ---
 name: review-pull-request
 description: "Review pull requests as a reviewer. Use when validating a PR before merge: performs independent code review, runs tests, validates manual testing. Handles single PRs with detailed analysis or multiple PRs in parallel batch mode with summary triage table."
-allowed-tools: "Bash(gh pr*), Bash(gh issue*), Bash(gh run*), Read, Grep, Glob"
+allowed-tools: "Bash(git:*), Bash(gh pr*), Bash(gh issue*), Bash(gh run*), Read, Grep, Glob"
 argument-hint: [owner/repo#number, PR URL, or multiple]
 disable-model-invocation: true
 ---

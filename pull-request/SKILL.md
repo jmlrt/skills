@@ -189,7 +189,7 @@ Brief summary from changed files
 - Key change 1
 - Key change 2
 
-Co-Authored-By: Claude Code <noreply@anthropic.com>
+Co-Authored-By: Claude Agent <noreply@anthropic.com>
 ```
 
 **PR description** (from commit message + testing status):
