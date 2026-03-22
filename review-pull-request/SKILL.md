@@ -131,7 +131,7 @@ Tone: concise and informal.
 ## Write operations
 
 - **Resolving threads**: only after user approves the Phase 2 triage list. Never resolve pre-emptively.
-- **Posting review**: output text in chat by default. Only call `gh pr review` or post comments via `gh api` when user explicitly requests it.
+- **Posting review**: output review text in chat by default. If user says "post the review" or "submit review", ask confirmation: **"Post review via `gh pr review`? (yes/no)"** — only call `gh pr review` or `gh api` after explicit yes.
 - **No merging**: never merge a PR via CLI unless explicitly asked.
 
 

@@ -22,6 +22,15 @@ bk build create --pipeline <org>/<pipeline> --branch main --web   # trigger and 
 printf 'Y\n' | bk build create --pipeline <org>/<pipeline> --branch <branch> --message "..."
 ```
 
+**⚠️ Security: Always quote env values** — prevent shell metacharacter injection:
+```bash
+# ❌ WRONG: unquoted value vulnerable to injection
+bk build create --pipeline org/pipe --env KEY=value;rm -rf /
+
+# ✅ CORRECT: quoted to treat as literal string
+bk build create --pipeline org/pipe --env "KEY=value;safe"
+```
+
 ## Querying Build Status
 
 ```bash
