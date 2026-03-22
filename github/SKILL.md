@@ -4,6 +4,7 @@ description: "Manages GitHub issues/PRs/repos using GitHub CLI (gh). Retrieve co
 allowed-tools: "Bash(git:*), Bash(gh:*), Bash(jq:*), Read"
 argument-hint: [issue-number or owner/repo#number]
 user-invocable: false
+disable-model-invocation: true
 ---
 
 # GitHub retrieval with `gh`

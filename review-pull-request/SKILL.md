@@ -159,7 +159,7 @@ When reviewing multiple PRs, orchestrate in parallel.
 
 Parse PR inputs (handles `owner/repo#123`, `https://github.com/owner/repo/pull/123`, bare `#123` with git remote inference).
 
-Validate that each PR exists with `gh pr view <owner/repo>#<n> --json number,title,author,url`.
+Validate that each PR exists with `gh pr view <n> --repo owner/repo --json number,title,author,url` (or by passing the full PR URL).
 
 ## Phase 2: Parallel dispatch
 

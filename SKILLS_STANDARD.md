@@ -85,7 +85,7 @@ All skills use consistent heading hierarchy: **max depth H1→H2→H3** (no H4+)
 **Subheading (bold text, not heading):**
 ```bash
 command
-```b
+```
 
 ### Workflow/Task Skills (pull-request, review-pull-request)
 

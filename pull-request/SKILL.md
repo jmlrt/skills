@@ -122,23 +122,30 @@ Closes #123
 git fetch origin
 CURRENT_BRANCH=$(git branch --show-current)
 
-# If on main/master, ask for feature branch name
+# Infer default branch from origin (e.g., main or master)
+DEFAULT_BRANCH=$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's|^origin/||')
+if [ -z "$DEFAULT_BRANCH" ]; then
+  DEFAULT_BRANCH="main"
+fi
+
+# If on main/master, ask for feature branch name and create it from the default branch
 if [ "$CURRENT_BRANCH" = "main" ] || [ "$CURRENT_BRANCH" = "master" ]; then
   echo "Enter feature branch name:"
-  # Read from user
+  read -r FEATURE_BRANCH
+  git checkout -b "$FEATURE_BRANCH" "origin/$DEFAULT_BRANCH"
 else
   FEATURE_BRANCH=$CURRENT_BRANCH
 fi
 
-# Rebase on main
-if ! git merge-base --is-ancestor origin/main HEAD; then
-  GIT_EDITOR=true git rebase origin/main || {
+# Rebase on the default branch
+if ! git merge-base --is-ancestor "origin/$DEFAULT_BRANCH" HEAD; then
+  GIT_EDITOR=true git rebase "origin/$DEFAULT_BRANCH" || {
     echo "❌ Rebase conflict. Resolve manually, retry."
     git rebase --abort
     exit 1
   }
 fi
-echo "✅ Up-to-date with main"
+echo "✅ Up-to-date with $DEFAULT_BRANCH"
 ```
 
 ### Phase 2: File Selection
