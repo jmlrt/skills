@@ -1,6 +1,6 @@
 ---
 name: triage-pull-requests
-description: Orchestrates review of one or more GitHub PRs in parallel using subagents. Produces a triage summary table with Critical/Suggestion/NIT findings per PR, then posts reviews (approve/comment/request-changes) based on user decisions. Use when the user asks to review multiple PRs, review PRs in parallel, or batch-review PRs across repos.
+description: "Orchestrates review of one or more GitHub PRs in parallel using subagents. Produces a triage summary table with Critical/Suggestion/NIT findings per PR, then posts reviews (approve/comment/request-changes) based on user decisions. Use when the user asks to review multiple PRs, review PRs in parallel, or batch-review PRs across repos."
 allowed-tools: "Bash(gh repo*), Bash(gh search*), Bash(gh api*), Bash(gh pr*), Read"
 argument-hint: [owner/repo#n ...]
 disable-model-invocation: true

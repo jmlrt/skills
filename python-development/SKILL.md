@@ -1,7 +1,8 @@
 ---
 name: python-development
-description: Write, maintain, and review Python code following user's style and preferences
-allowed-tools: Read, Grep, Glob, Edit, Write
+description: "Write, maintain, and review Python code following user's style and preferences."
+allowed-tools: "Read, Grep, Glob, Edit, Write"
+argument-hint: ""
 user-invocable: false
 ---
 
