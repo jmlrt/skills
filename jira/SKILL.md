@@ -7,14 +7,6 @@ argument-hint: [PROJECT-ticket or epic-key]
 
 # Jira retrieval with `acli`
 
-## Prerequisites
-
-- **acli**: https://developer.atlassian.com/cloud/acli/guides/introduction/
-
-```bash
-which acli || echo "acli not installed: https://developer.atlassian.com/cloud/acli/guides/introduction/"
-```
-
 ## Scope + defaults
 
 - Default to **read-only** Jira access. Do not create/edit/transition Jira work items unless explicitly requested.

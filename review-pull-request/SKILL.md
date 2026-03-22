@@ -14,7 +14,12 @@ This skill is for **reviewers** validating PRs before merge. Authors use the **p
 
 ## Review stance
 
-Determine mode before starting. The agent picks based on signals; user can override at any time.
+Default to **polish mode** (thorough review). User can request **ship-it mode** (pragmatic) at any time.
+
+### Polish mode (default)
+- Request NIT fixes in-PR via inline comments
+- Suggest refactoring, ask for more tests, give per-file detailed feedback
+- Consolidate findings into a detailed summary comment
 
 ### Ship-it mode (pragmatic)
 - Focus on critical/blocking issues only
@@ -22,17 +27,7 @@ Determine mode before starting. The agent picks based on signals; user can overr
 - No change requests for style, naming, or minor refactoring
 - Bias toward approval with conditions
 
-### Polish mode (thorough)
-- Request NIT fixes in-PR via inline comments
-- Suggest refactoring, ask for more tests, give per-file detailed feedback
-
-### Detection signals
-
-**Ship-it** (any of): user says "urgent" / "too many rounds" / "skip NITs" / "focus on critical"; PR has many existing review rounds or comments; PR is weeks old; user explicitly says not looking for perfection.
-
-**Polish** (default): fresh PR / first review round; user asks for thorough review without urgency; small focused PR.
-
-**Default**: polish mode. If signals are ambiguous, confirm stance with user before proceeding.
+**How to request ship-it**: Say "urgent" / "pragmatic" / "focus on critical" / "skip NITs".
 
 
 ## Review checklist

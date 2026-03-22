@@ -7,16 +7,6 @@ argument-hint: [pipeline-slug or build-number]
 
 # Buildkite CLI (`bk`)
 
-## Prerequisites
-
-- **bk CLI**: https://github.com/buildkite/cli
-
-```bash
-which bk || echo "bk not installed: https://github.com/buildkite/cli"
-```
-
-One-time auth setup: `bk configure`
-
 ## Triggering Builds
 
 ```bash

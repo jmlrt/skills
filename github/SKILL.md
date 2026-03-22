@@ -3,22 +3,14 @@ name: github
 description: "Manages GitHub issues/PRs/repos using GitHub CLI (gh). Retrieve context, create/edit issues and PRs, manage workflows, and resolve review threads. Use when GitHub issues/PRs are mentioned, when you need details for planning, or when managing PR/issue workflows."
 allowed-tools: "Bash(gh:*), Read"
 argument-hint: [issue-number or owner/repo#number]
+user-invocable: false
 ---
 
 # GitHub retrieval with `gh`
 
-## Prerequisites
-
-- **gh CLI**: https://github.com/cli/cli
-
-```bash
-which gh || echo "gh not installed: https://github.com/cli/cli"
-```
-
 ## Scope + defaults
 
-- Default to **read-only** GitHub access.
-- Do not create/edit/comment/close/merge or otherwise modify GitHub state unless explicitly requested.
+- Default to **read-only** GitHub access. Do not create/edit/comment/close/merge or otherwise modify GitHub state unless explicitly requested.
 - Prefer **small, targeted** reads (specific PR/issue, or a small list) over dumping large JSON.
 
 ## Repo selection (critical)
