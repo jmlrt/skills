@@ -1,6 +1,9 @@
 ---
 name: pull-request
 description: Create and update pull requests, then iterate on review feedback. Covers PR templates, title/body conventions, file validation, and addressing reviewer comments.
+allowed-tools: Bash, Read, Edit, Write, Grep, Glob, AskUserQuestion
+disable-model-invocation: true
+argument-hint: "[branch-name]"
 ---
 
 # Pull Request Workflow (Author)

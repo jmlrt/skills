@@ -2,6 +2,7 @@
 name: jira
 description: Retrieves Jira ticket and epic context using Atlassian CLI (acli) in read-only mode. Use when the user mentions Jira tickets (e.g., PROJECT-1234), asks for epic child tickets, needs outcomes/acceptance criteria summarized, or wants JQL-based ticket lists via `acli jira workitem view/search`.
 allowed-tools: "Bash(acli:*), Read"
+argument-hint: "[PROJECT-ticket or epic-key]"
 ---
 
 # Jira retrieval with `acli`
