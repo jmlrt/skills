@@ -1,7 +1,7 @@
 ---
 name: pull-request
 description: "Create and update pull requests as an author. Use when you're ready to propose changes: creates PRs with comprehensive file validation, tests, commit messages, and PR descriptions. Also guides addressing reviewer feedback through iterative fixes and comment resolution."
-allowed-tools: "Bash, Read, Edit, Write, Grep, Glob, AskUserQuestion"
+allowed-tools: "Bash(git:*), Bash(gh:*), Read, Edit, Write, Grep, Glob, AskUserQuestion"
 argument-hint: [branch-name]
 disable-model-invocation: true
 ---
@@ -185,7 +185,15 @@ Save both to `COMMIT_MESSAGE.md` and `PR_DESCRIPTION.md`.
 
 ### Phase 6: Push & Create PR
 
+**Before proceeding**: Confirm that you're ready to push to origin and create the PR. Review the commit message and PR body one more time if needed.
+
+**Confirmation**: Ask the user: "Ready to push to origin and create PR? (yes/no)"
+
+Only proceed if user explicitly confirms.
+
 **Options**: Draft by default; use `--repo <owner/repo>` for non-current repo; use `Closes #X` in body for issue linkage.
+
+**If confirmed:**
 
 ```bash
 git commit -F COMMIT_MESSAGE.md
