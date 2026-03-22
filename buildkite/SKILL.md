@@ -121,6 +121,41 @@ if [ "$STATUS" = "failed" ]; then
 fi
 ```
 
+## Real-world workflow: Check logs of a failed build
+
+**Goal**: Investigate a failed build by retrieving job logs and finding the error.
+
+```bash
+# 1. Get the most recent failed build for a pipeline
+PIPELINE="org/my-pipeline"
+BUILD=$(bk build list --pipeline $PIPELINE --state failed --limit 1 -o json | \
+  jq -r '.[0].number')
+
+echo "Checking failed build #$BUILD"
+
+# 2. List all jobs in the build with their status
+bk build view $BUILD --pipeline $PIPELINE -o json | \
+  jq -r '.jobs[] | "\(.id): \(.name) → \(.state)"'
+
+# 3. Retrieve log for the first failed job
+FIRST_JOB=$(bk build view $BUILD --pipeline $PIPELINE -o json | \
+  jq -r '.jobs[] | select(.state == "failed") | .id' | head -1)
+
+echo "Retrieving logs for job: $FIRST_JOB"
+bk job log $FIRST_JOB --pipeline $PIPELINE --build $BUILD | head -100
+
+# 4. Search logs for error patterns (e.g., "Error", "FAIL", "panic")
+echo "--- Error summary ---"
+bk job log $FIRST_JOB --pipeline $PIPELINE --build $BUILD | \
+  grep -iE "(error|fail|panic|exception)" | head -20
+```
+
+**Tips**:
+- **Multiple failed jobs**: Loop through `jq -r '.jobs[] | select(.state == "failed") | .id'` to check all failures
+- **Large logs**: Use `head -N` to peek at the start, or `grep <pattern>` to find specific errors — avoid `tail -N` which buffers the entire log
+- **Specific line range**: `bk job log <id> -p $PIPELINE -b $BUILD | sed -n '50,150p'` to view lines 50–150
+- **Web view**: `bk build view <build-number> --pipeline <org>/<pipeline> --web` to open in browser and inspect interactively
+
 ## Sandbox / Permissions
 
 **Always use `required_permissions: ["all"]`** — `["network"]` is NOT sufficient: `bk` fails with a TLS certificate error inside the sandbox even with network access enabled.
