@@ -1,56 +1,12 @@
-# Python Development Tooling
+# Python Tooling: Greenfield Templates
 
-Setup and configuration templates for modern Python development.
-
-**Tools**: uv (package mgmt) | ruff (lint + format) | ty (type check) | make (automation) | pre-commit (git hooks)
-
-**Master command**: `make check` (lint + typecheck + test)
+Copy-paste templates for new projects. For brownfield guidance, see SKILL.md.
 
 ---
 
-## Key Commands
+## Greenfield pyproject.toml
 
-### uv
-```bash
-uv sync                          # Install from pyproject.toml
-uv sync --all-extras             # Include all optional deps
-uv run pytest                    # Run tests in venv
-uv run ruff check src/           # Run linter in venv
-uv build                         # Build distribution
-uv publish                       # Publish to PyPI
-```
-
-### ruff
-```bash
-ruff check src/                  # Find violations
-ruff check --fix src/            # Auto-fix
-ruff format src/                 # Format code
-```
-
-### ty
-```bash
-ty check src/                    # Type check project
-ty check --strict src/           # Strict mode
-```
-
-### make
-```bash
-make dev                         # Install dependencies
-make check                       # Lint + typecheck + test
-make test                        # Run tests only
-make test-cov                    # Tests with coverage
-```
-
-### pre-commit
-```bash
-pre-commit install               # Install hooks
-pre-commit run --all-files       # Run all hooks manually
-pre-commit autoupdate            # Update hook versions
-```
-
----
-
-## pyproject.toml Template
+Use this as your starting template for new projects:
 
 ```toml
 [build-system]
@@ -60,108 +16,111 @@ build-backend = "hatchling.build"
 [project]
 name = "my-project"
 version = "0.1.0"
-description = "My Python project"
-requires-python = ">=3.11"
-authors = [{name = "Your Name", email = "you@example.com"}]
+description = "Your project description"
+readme = "README.md"
 license = {text = "MIT"}
+requires-python = ">=3.12"
+authors = [{name = "Your Name", email = "you@example.com"}]
 
 dependencies = [
-    "click>=8.1",
-    "pydantic>=2.10",
-    "rich>=13.9",
-]
-
-[project.optional-dependencies]
-dev = [
-    "pytest>=8.3",
-    "pytest-cov>=6.0",
-    "ruff>=0.9",
-    "ty>=0.0.1a6",
-    "pre-commit>=4.0",
+    # Add your runtime dependencies here
+    "click>=8.1",        # if building a CLI
+    "rich>=13.9",        # for console output
 ]
 
 [project.scripts]
-my-cli = "my_project.cli:main"
+# Uncomment if you have a CLI
+# my-project = "my_project.cli:main"
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.0.0",
+    "pytest>=9.0.0",
+    "pytest-cov>=7.0.0",
+    "ruff>=0.14.0",
+    "ty>=0.0.1a0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "--cov=my_project --cov-report=term-missing:skip-covered --cov-fail-under=80"
 
 [tool.ruff]
 line-length = 100
-target-version = "py311"
+target-version = "py312"
 
 [tool.ruff.lint]
-select = ["E", "W", "F", "I", "B", "C4", "UP", "ARG", "SIM"]
-ignore = ["E501"]
+select = ["E", "F", "I", "W"]  # PEP 8, Pyflakes, isort, warnings
+ignore = ["E501"]               # Line too long (handled by formatter)
 
 [tool.ruff.lint.isort]
 known-first-party = ["my_project"]
 
-[tool.ty]
-python_version = "3.11"
-strict = true
-exclude = ["tests/", "venv/"]
-
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-addopts = "--cov=my_project --cov-report=term-missing:skip-covered --cov-fail-under=80"
-
-[tool.coverage.run]
-omit = ["*/tests/*"]
+[tool.hatch.build.targets.wheel]
+packages = ["src/my_project"]
 ```
 
 ---
 
-## Makefile Template
+## Greenfield Makefile
 
 ```makefile
-.PHONY: dev check test test-cov format lint typecheck clean help
+.PHONY: help install test test-v test-cov lint format fix check typecheck clean
 
-help:
-	@echo "Available targets:"
-	@echo "  make dev         Install dependencies"
-	@echo "  make check       Lint + typecheck + test"
-	@echo "  make test        Run tests only"
-	@echo "  make test-cov    Tests with coverage"
-	@echo "  make format      Auto-format code"
-	@echo "  make lint        Run linter (no fix)"
-	@echo "  make typecheck   Run type checker"
+help:  ## Show this help
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | \
+	  awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}'
 
-dev:
+install:  ## Install dependencies
 	uv sync --all-extras
+	uv run pre-commit install
 
-check: lint typecheck test
+test:  ## Run tests
+	uv run pytest -q
 
-test:
-	uv run pytest
+test-v:  ## Run tests (verbose)
+	uv run pytest -v
 
-test-cov:
-	uv run pytest --cov=my_project --cov-report=term-missing:skip-covered
+test-cov:  ## Run tests with coverage report
+	uv run pytest --cov=my_project --cov-report=term-missing
 
-lint:
+lint:  ## Lint and check formatting
+	uv run ruff check src/ tests/
+	uv run ruff format --check src/ tests/
+
+format:  ## Auto-format code
+	uv run ruff format src/ tests/
+
+fix:  ## Auto-fix all issues
 	uv run ruff check --fix src/ tests/
 	uv run ruff format src/ tests/
 
-typecheck:
+typecheck:  ## Type check with strict mode
 	uv run ty check src/
 
-clean:
-	rm -rf .pytest_cache .coverage htmlcov dist build *.egg-info
-	find . -type d -name __pycache__ -exec rm -rf {} +
+check:  lint typecheck test  ## Run all checks (lint + typecheck + test)
+
+clean:  ## Remove build artifacts
+	rm -rf build/ dist/ *.egg-info/ .pytest_cache/ .ruff_cache/ .coverage htmlcov/
+	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
 ```
 
 ---
 
-## .pre-commit-config.yaml Template
+## Greenfield .pre-commit-config.yaml
 
 ```yaml
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.9.0
+    rev: v0.14.0
     hooks:
       - id: ruff
         args: [--fix]
       - id: ruff-format
 
   - repo: https://github.com/astral-sh/ty-pre-commit
-    rev: v0.0.1a6
+    rev: v0.0.1a0
     hooks:
       - id: ty
 
@@ -178,35 +137,93 @@ repos:
 
 ---
 
-## Test Directory Structure
+## Greenfield Setup (First Time)
 
-```
-tests/
-├── unit/
-│   ├── test_processor.py    # Core logic, no I/O
-│   ├── test_parser.py
-│   └── conftest.py          # unit test fixtures
-├── cli/
-│   ├── test_extract_cmd.py  # Click command interface
-│   └── conftest.py          # CLI fixtures (CliRunner, etc.)
-└── integration/
-    ├── test_workflow.py     # Full E2E
-    └── fixtures/
-        ├── sample_input.md
-        └── expected_output.txt
-```
+```bash
+# Create .python-version file
+echo "3.12" > .python-version
 
-Coverage target: 80%+ (enforced by pyproject.toml).
+# Install dependencies
+make install
+
+# Run all checks
+make check
+
+# You're ready
+git add .
+git commit -m "Initial project setup"
+```
 
 ---
 
-## Installation
+## Key Commands
 
-See official docs for each tool:
-- uv: https://docs.astral.sh/uv/getting-started/
-- ruff: https://docs.astral.sh/ruff/
-- ty: https://github.com/astral-sh/ty
-- pre-commit: https://pre-commit.com/
+### uv (Package Management)
+```bash
+uv sync              # Install from pyproject.toml
+uv run pytest        # Run tests in project venv
+uv run ruff check    # Run linter
+uv python pin 3.12   # Pin Python version project-wide
+```
 
-Then run: `make dev && make check`
+### ruff (Lint + Format)
+```bash
+ruff check src/      # Find style issues
+ruff check --fix     # Auto-fix style
+ruff format src/     # Format code
+```
+
+### ty (Type Checking)
+```bash
+ty check src/        # Check types
+```
+
+### pytest (Testing)
+```bash
+pytest               # Run all tests
+pytest tests/test_foo.py  # Run specific test file
+pytest -k test_name  # Run tests matching pattern
+pytest --cov        # Run with coverage report
+```
+
+### pre-commit (Git Hooks)
+```bash
+pre-commit install   # Install hooks in .git
+pre-commit run --all-files  # Run hooks manually
+pre-commit autoupdate  # Update hook versions
+```
+
+---
+
+## Brownfield: Minimal Makefile
+
+If working with legacy code, use just this:
+
+```makefile
+.PHONY: help install test lint check clean
+
+help:
+	@echo "install - install dependencies"
+	@echo "test - run tests"
+	@echo "lint - run linter"
+	@echo "check - lint + test"
+	@echo "clean - remove artifacts"
+
+install:
+	pip install -e ".[dev]" || uv sync
+
+test:
+	pytest
+
+lint:
+	ruff check .
+
+check: lint test
+
+clean:
+	rm -rf build/ dist/ *.egg-info .pytest_cache .coverage
+	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
+```
+
+This works with any project structure.
 

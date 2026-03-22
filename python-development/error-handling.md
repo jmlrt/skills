@@ -1,13 +1,15 @@
-# Error Handling Patterns
+# Error Handling: Greenfield Defaults
 
-Production patterns for handling expected failures and bugs.
+For new projects: **Result dataclasses for expected failures**, **exceptions for bugs**.
 
 ---
 
 ## Core Principle
 
-- ✅ **Result Dataclasses**: Expected failures (user input, file not found)
-- ✅ **Custom Exceptions**: Unexpected bugs (programming errors, system failures)
+- ✅ **Result Dataclasses**: Expected failures (file not found, invalid input, network timeout)
+- ✅ **Exceptions**: Unexpected bugs (programming errors, system failures)
+
+This gives explicit control flow without exception overhead.
 
 ---
 
@@ -16,8 +18,6 @@ Production patterns for handling expected failures and bugs.
 ### Pattern
 
 ```python
-from __future__ import annotations
-
 from dataclasses import dataclass
 
 @dataclass
@@ -30,6 +30,7 @@ class ProcessResult:
 def process_item(item: str) -> ProcessResult:
     """Process an item."""
     try:
+        # Do work
         result_data = {"processed": item}
         return ProcessResult(success=True, data=result_data)
     except ValueError as e:
@@ -39,41 +40,26 @@ def process_item(item: str) -> ProcessResult:
 ### Usage in CLI
 
 ```python
-# src/my_project/commands/process.py
-from my_project.core.processor import process_directory
+# In your CLI command
+result = process_item("input")
 
-@click.command()
-@click.argument("path", type=click.Path(exists=True), default=".")
-@click.pass_context
-def process_command(ctx: click.Context, path: str) -> None:
-    """Process files in directory."""
-    cli_ctx: Context = ctx.find_object(Context)
-    config = cli_ctx.config
+if not result.success:
+    console.print(f"[red]Error:[/red] {result.error}")
+    raise typer.Exit(1)
 
-    result = process_directory(Path(path), config)
-
-    if not result.success:
-        console.print(f"[red]Error:[/red] {result.error}")
-        raise SystemExit(1)
-
-    console.print(
-        f"[green]Success![/green] "
-        f"Processed: {result.processed_items}, "
-        f"Skipped: {result.skipped_items}"
-    )
+console.print(f"Success: {result.data}")
 ```
 
 ### Partial Success Pattern
 
-When some items succeed and some fail:
+When processing multiple items:
 
 ```python
 from dataclasses import dataclass, field
 
 @dataclass
 class BatchResult:
-    """Result of batch operation."""
-    success: bool  # True = all succeeded, False = some/all failed
+    success: bool  # True = all succeeded
     succeeded: list[str] = field(default_factory=list)
     failed: list[tuple[str, str]] = field(default_factory=list)  # (item, error)
 
@@ -87,7 +73,7 @@ def process_batch(items: list[str]) -> BatchResult:
         if result.success:
             succeeded.append(item)
         else:
-            failed.append((item, result.error or "Unknown error"))
+            failed.append((item, result.error or "Unknown"))
 
     return BatchResult(
         success=len(failed) == 0,
@@ -98,77 +84,70 @@ def process_batch(items: list[str]) -> BatchResult:
 
 ---
 
-## Testing Results
-
-```python
-# tests/unit/test_processor.py
-def test_process_succeeds_with_valid_directory(tmp_path: Path):
-    """Test successful processing."""
-    test_file = tmp_path / "test.md"
-    test_file.write_text("# Test")
-
-    config = Config()
-    result = process_directory(tmp_path, config)
-
-    assert result.success is True
-    assert result.processed_items == 1
-    assert result.error is None
-
-def test_process_fails_with_missing_directory():
-    """Test handling missing directory."""
-    config = Config()
-    result = process_directory(Path("/nonexistent"), config)
-
-    assert result.success is False
-    assert "not found" in result.error.lower()
-```
-
----
-
 ## Custom Exceptions for Bugs
 
-For unexpected errors and programming bugs:
+For errors that shouldn't happen:
 
 ```python
 class AppError(Exception):
-    """Base exception for all app errors."""
+    """Base application error."""
     exit_code: int = 1
 
 class ConfigError(AppError):
-    """Configuration file errors."""
+    """Configuration error."""
     pass
 
 class ValidationError(AppError):
-    """Input validation errors."""
-    pass
-
-class FetchError(AppError):
-    """URL fetching errors."""
+    """Validation error."""
     pass
 ```
 
-### Usage in CLI
+Usage:
 
 ```python
 def load_config(path: Path) -> Config:
-    """Load configuration from file."""
+    """Load config file."""
     if not path.exists():
-        raise ConfigError(f"Config not found: {path}")
+        raise ConfigError(f"Config file not found: {path}")
 
     try:
         with path.open() as f:
             data = yaml.safe_load(f)
-        return Config.model_validate(data)
-    except ValidationError as e:
+        return Config(**data)
+    except Exception as e:
         raise ConfigError(f"Invalid config: {e}")
 
-# In main CLI handler
+# In CLI:
 try:
     config = load_config(config_path)
     result = do_work(config)
 except AppError as e:
     console.print(f"[red]Error:[/red] {e}")
-    raise SystemExit(e.exit_code)
+    raise typer.Exit(e.exit_code)
+```
+
+---
+
+## Testing Error Paths
+
+```python
+# tests/test_processor.py
+
+def test_succeeds_with_valid_input():
+    result = process_item("valid")
+    assert result.success
+    assert result.data == {"processed": "valid"}
+
+def test_fails_with_invalid_input():
+    result = process_item("invalid")
+    assert not result.success
+    assert "invalid" in result.error.lower()
+
+def test_partial_success():
+    result = process_batch(["valid", "invalid", "valid"])
+    assert not result.success  # Some failed
+    assert len(result.succeeded) == 2
+    assert len(result.failed) == 1
 ```
 
 ---
@@ -177,12 +156,12 @@ except AppError as e:
 
 **DO**:
 - ✅ Use result dataclasses for expected failures
-- ✅ Use custom exceptions for bugs
-- ✅ Check `.success` before using result data
-- ✅ Return error message when `success=False`
+- ✅ Use exceptions for bugs
+- ✅ Always check `.success` before using result data
+- ✅ Include error message when `success=False`
 
 **DON'T**:
-- ❌ Raise exceptions for expected failures (file not found, invalid input)
+- ❌ Raise exceptions for expected failures
 - ❌ Ignore result status
-- ❌ Leave `error` field unset when `success=False`
+- ❌ Leave `.error` unset when `success=False`
 

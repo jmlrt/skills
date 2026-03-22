@@ -1,126 +1,107 @@
-# CLI Patterns & Architecture
+# CLI Patterns: Separation of Concerns
 
-Production patterns for building testable, reusable CLI tools.
+For greenfield CLI projects: **thin CLI wrapper** + **pure core logic**.
 
 ---
 
-## Separation of Concerns
+## Pattern: Separation of Concerns
 
-**Pattern**: CLI parsing (thin wrapper) + business logic (pure functions).
+**Goal**: Make core logic testable without mocking Click/Typer.
 
 ```
-CLI Module (50-150 lines)     Core Module (Pure Logic)
-  • Parse Click args      →     • No Click dependencies
-  • Call core function    ←     • Returns dataclass
-  • Display with Rich         • 100% testable
+CLI Layer (50-150 lines)           Core Layer (Pure Logic)
+  • Parse arguments      →           • No CLI imports
+  • Call core function   ←           • Returns dataclass
+  • Display output                   • 100% testable
 ```
 
-### Example: Core Module
+### Example: Greenfield CLI (englog pattern)
+
+Core logic:
 
 ```python
-# src/my_project/core/extractor.py
+# src/my_project/core/processor.py
 from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from my_project.config import Config
 
 @dataclass
-class Article:
-    title: str
-    description: str
-
-@dataclass
-class ExtractionResult:
+class ProcessResult:
     success: bool
-    articles: list[Article]
+    processed: int = 0
     error: str | None = None
 
-def extract_metadata(
-    path: Path,
-    config: Config,
-) -> ExtractionResult:
-    """Extract metadata from markdown files."""
+def process_file(path: Path) -> ProcessResult:
+    """Pure business logic - no CLI dependencies."""
     try:
-        articles = []
-        for file in path.glob("*.md"):
-            articles.append(Article(
-                title=file.stem,
-                description=file.read_text()[:150],
-            ))
-        return ExtractionResult(success=True, articles=articles)
-    except Exception as e:
-        return ExtractionResult(success=False, articles=[], error=str(e))
+        content = path.read_text()
+        # Do work
+        return ProcessResult(success=True, processed=1)
+    except FileNotFoundError:
+        return ProcessResult(success=False, error=f"Not found: {path}")
 ```
 
-### Example: CLI Module
+CLI wrapper:
 
 ```python
-# src/my_project/commands/extract.py
-from __future__ import annotations
-
-from pathlib import Path
-
-import click
+# src/my_project/cli.py
+import typer
 from rich.console import Console
-from rich.table import Table
+from my_project.core.processor import process_file
 
-from my_project.core.extractor import extract_metadata
-from my_project.context import Context
-
+app = typer.Typer()
 console = Console()
 
-@click.command()
-@click.argument("path", type=click.Path(exists=True), default=".")
-@click.option("--format", "-f", type=click.Choice(["table", "json"]), default="table")
-@click.pass_context
-def extract_command(
-    ctx: click.Context,
-    path: str,
-    format: str,
-) -> None:
-    """Extract metadata from markdown files."""
-    cli_ctx: Context = ctx.find_object(Context)
-    config = cli_ctx.config
+@app.command()
+def process(path: str) -> None:
+    """Process a file."""
+    result = process_file(Path(path))
 
-    if config is None:
-        console.print("[red]Error:[/red] No configuration loaded")
-        raise SystemExit(1)
-
-    # Call core logic
-    result = extract_metadata(Path(path), config)
-
-    # Display results
     if not result.success:
         console.print(f"[red]Error:[/red] {result.error}")
-        raise SystemExit(1)
+        raise typer.Exit(1)
 
-    if format == "json":
-        import json
-        console.print_json(data=[{"title": a.title} for a in result.articles])
-    else:
-        table = Table(title="Articles")
-        table.add_column("Title")
-        for article in result.articles:
-            table.add_row(article.title)
-        console.print(table)
+    console.print(f"[green]✓[/green] Processed {result.processed} items")
+
+if __name__ == "__main__":
+    app()
 ```
 
-**Result**: Core logic testable without Click, reusable in other commands, multiple output formats.
+Test core logic (no CLI):
+
+```python
+# tests/test_processor.py
+from pathlib import Path
+from my_project.core.processor import process_file
+
+def test_process_succeeds(tmp_path: Path):
+    """Test core logic directly."""
+    test_file = tmp_path / "test.txt"
+    test_file.write_text("content")
+    result = process_file(test_file)
+    assert result.success
+    assert result.processed == 1
+
+def test_process_fails_not_found():
+    """Test error handling."""
+    result = process_file(Path("/nonexistent"))
+    assert not result.success
+    assert "Not found" in result.error
+```
+
+**Result**: Core logic testable, reusable, no Click/Typer mocks needed.
 
 ---
 
-## Type Checking & Circular Imports
+## Type Checking: Optional for Complex Projects
 
-**Pattern**: Use `TYPE_CHECKING` to import types without causing circular imports.
+Only needed if you have circular imports between modules.
 
-### The Problem
+**Problem**: Module A imports types from Module B for type hints, Module B imports from Module A.
 
 ```python
-# ❌ CIRCULAR: module_a imports module_b, module_b imports module_a
+# ❌ CIRCULAR
 # module_a.py
 from module_b import Config
 
@@ -128,106 +109,55 @@ def process(config: Config) -> None:
     pass
 
 # module_b.py
-from module_a import SomeClass  # Import fails here
+from module_a import SomeClass  # ← Import error!
 ```
 
-### The Solution
+**Solution**: Use `TYPE_CHECKING` to import only for type hints:
 
 ```python
-# ✅ NO CIRCULAR: Use TYPE_CHECKING guard
+# ✅ FIXED
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from module_b import Config  # Type checking only, not at runtime
+    from module_b import Config  # Type checking only
 
 def process(config: "Config") -> None:  # String reference
-    # No circular import at runtime
     pass
 ```
 
-### Example: CLI Architecture
+**When to use**:
+- Complex projects (clipmd) with many interdependencies → use TYPE_CHECKING
+- Simple projects (englog, spotfm) → probably don't need it
 
-```python
-# src/my_project/context.py
-from __future__ import annotations
-
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from my_project.config import Config
-
-class Context:
-    """CLI context object."""
-    def __init__(self, config: Config | None = None):
-        self.config = config
-
-# src/my_project/cli.py
-from my_project.context import Context
-
-@click.group()
-@click.pass_context
-def main(ctx: click.Context) -> None:
-    context = Context(config=load_config())
-    ctx.obj = context
-
-# src/my_project/commands/extract.py
-from my_project.context import Context
-
-@click.command()
-@click.pass_context
-def extract(ctx: click.Context) -> None:
-    cli_ctx: Context = ctx.find_object(Context)
-    config = cli_ctx.config
-    # Use config
-```
-
-**Key Points**:
-- All files import from `context.py` (neutral location)
-- No circular dependencies
-- Full type safety (IDE autocomplete works)
-- Zero runtime overhead
+**Don't add it unless you hit a circular import error.**
 
 ---
 
-## Testing CLI Logic
+## Testing Patterns
 
-### Test Core Logic (No Click)
+### Test Core Logic
 
 ```python
-# tests/unit/test_extractor.py
-from pathlib import Path
-from my_project.core.extractor import extract_metadata
-
-def test_extract_finds_articles(tmp_path: Path):
-    """Test extraction logic directly."""
-    test_file = tmp_path / "test.md"
-    test_file.write_text("# Title\n\nDescription here...")
-
-    config = Config()
-    result = extract_metadata(tmp_path, config)
-
+# tests/test_core_logic.py
+def test_core_function(tmp_path: Path):
+    """Test business logic directly."""
+    result = core.do_something(tmp_path)
     assert result.success
-    assert len(result.articles) == 1
 ```
 
-### Test CLI Interface
+### Test CLI Interface (if needed)
 
 ```python
-# tests/cli/test_extract_cmd.py
-from click.testing import CliRunner
-from my_project.commands.extract import extract_command
-from my_project.context import Context
+# tests/test_cli.py
+from typer.testing import CliRunner
+from my_project.cli import app
 
-def test_extract_command_output(mock_config):
-    """Test CLI interface."""
+def test_cli_command():
+    """Test CLI command interface."""
     runner = CliRunner()
-    result = runner.invoke(
-        extract_command,
-        ["--format", "json"],
-        obj=Context(config=mock_config)
-    )
-
+    result = runner.invoke(app, ["--help"])
     assert result.exit_code == 0
-    assert "Title" in result.output
 ```
+
+**Key**: Test core logic directly, test CLI only for argument parsing + output.
 
