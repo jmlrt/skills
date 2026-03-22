@@ -12,6 +12,14 @@ Apply this skill when writing, maintaining, or reviewing Python code.
 
 ---
 
+## Supporting Files
+
+- **[tooling.md](tooling.md)** — Copy-paste templates for greenfield project setup (pyproject.toml, Makefile, .pre-commit-config.yaml)
+- **[code-style.md](code-style.md)** — Style rules and conventions (naming, formatting, type hints, imports)
+- **[patterns.md](patterns.md)** — Architecture patterns (CLI/core separation, exception hierarchy, error handling)
+
+---
+
 ## Mode Detection
 
 Detect the mode from the user's request before acting:
