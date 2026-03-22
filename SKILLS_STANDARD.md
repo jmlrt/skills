@@ -87,7 +87,7 @@ All skills use consistent heading hierarchy: **max depth H1→H2→H3** (no H4+)
 command
 ```b
 
-### Workflow/Task Skills (pull-request, review-pull-request, triage-pull-requests)
+### Workflow/Task Skills (pull-request, review-pull-request)
 
 ```markdown
 # Skill Title: Context
