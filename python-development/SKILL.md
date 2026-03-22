@@ -1,6 +1,6 @@
 ---
 name: python-development
-description: "Write, maintain, and review Python code following user's style and preferences."
+description: "Guide Python development with greenfield defaults and brownfield flexibility. Apply when writing, maintaining, or reviewing Python code to ensure consistency with modern tooling (uv, ruff, ty, pytest, pre-commit) and patterns (CLI separation, type safety, error handling)."
 allowed-tools: "Read, Grep, Glob, Edit, Write"
 argument-hint: ""
 user-invocable: false

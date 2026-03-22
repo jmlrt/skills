@@ -1,6 +1,6 @@
 ---
 name: pull-request
-description: "Create and update pull requests, then iterate on review feedback. Covers PR templates, title/body conventions, file validation, and addressing reviewer comments."
+description: "Create and update pull requests as an author. Use when you're ready to propose changes: creates PRs with comprehensive file validation, tests, commit messages, and PR descriptions. Also guides addressing reviewer feedback through iterative fixes and comment resolution."
 allowed-tools: "Bash, Read, Edit, Write, Grep, Glob, AskUserQuestion"
 argument-hint: [branch-name]
 disable-model-invocation: true

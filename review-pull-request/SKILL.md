@@ -1,6 +1,6 @@
 ---
 name: review-pull-request
-description: "Reviews GitHub pull requests comprehensively. Triages existing review comments, performs independent code review, runs tests, validates manual testing, checks Jira/issue coverage. Use when the user asks to review a PR, check a PR, or audit PR readiness."
+description: "Review pull requests as a reviewer. Use when validating a PR before merge: triages existing comments, performs independent code review, runs tests, validates manual testing, checks issue alignment. Guides decisions on critical issues, suggestions, and NITs."
 allowed-tools: "Bash(gh pr*), Bash(gh issue*), Bash(gh run*), Read, Grep, Glob"
 argument-hint: [owner/repo#number or PR URL]
 disable-model-invocation: true
