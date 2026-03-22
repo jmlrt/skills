@@ -161,31 +161,6 @@ gh run list --head-sha $COMMIT_SHA --limit 1 --json status,conclusion,name,creat
 gh run list --branch main --limit 1 --json status,conclusion,createdAt,workflowName
 ```
 
-## Common failure modes + fixes
-
-- **Wrong repo**: add `--repo <owner/repo>`.
-- **Auth/permissions errors**: avoid write operations; if reads fail, check `gh auth status`.
-- **No push permission to upstream repo**: if `gh repo view <owner/repo> --json viewerPermission` shows `READ`, push to a fork and open the PR from `fork:branch` to `upstream:base`.
-- **Too much output**: use `--json` with a narrow field list.
-- **403 Forbidden / TLS errors (Claude Code sandbox)**: `gh` commands should work without `required_permissions`. Try in sandbox first; only escalate to `required_permissions: ["full_network"]` if the command actually fails.
-
-### Fork-first PR flow (when upstream is read-only)
-
-```bash
-gh repo view owner/repo --json viewerPermission
-git remote add fork git@github.com:<your-user>/repo.git
-git push -u fork HEAD
-gh pr create --repo owner/repo --base main --head <your-user>:<branch>
-```
-
-### `gh` auth selection gotcha
-
-If `gh auth status` reports an invalid `GITHUB_TOKEN`, `gh` prefers it over keychain auth. Fix with:
-
-```bash
-unset GITHUB_TOKEN GH_TOKEN
-```
-
 ## Write operations (when explicitly requested)
 
 - Any GitHub side effect requires explicit user approval.
@@ -289,86 +264,16 @@ gh pr view <n> --repo <r> --json headRefOid --jq .headRefOid
 
 ## Troubleshooting
 
-### GraphQL Variable Declaration Errors
+**Wrong repo**: Add `--repo <owner/repo>` explicitly.
 
-**Error**: "Variable $id is used but not declared"
+**Not authenticated**: `gh auth status` → `gh auth login` (scopes: `repo`, `gist`, `read:org`). If `GITHUB_TOKEN` is invalid: `unset GITHUB_TOKEN GH_TOKEN`.
 
-**Cause**: GraphQL variable defined with `-f <var-name>="<value>"` but not declared in query/mutation signature.
+**Repository not found**: Either not in a git repo (`git rev-parse --git-dir`) or REST shorthand failing. Extract explicitly: `OWNER=$(gh repo view --json owner -q .owner.login)`, `REPO=$(gh repo view --json name -q .name)`.
 
-**Fix**: Declare variable in mutation/query signature:
+**No push permission**: Check `gh repo view <owner/repo> --json viewerPermission`. If `READ` only, push to a fork: `gh pr create --repo upstream --base main --head user:branch`.
 
-```bash
-# CORRECT - variable declared in signature
-gh api graphql -f id="<value>" -f query='
-mutation($id: ID!) {
-  resolveReviewThread(input: {threadId: $id}) {
-    thread { id isResolved }
-  }
-}
-'
+**Too much output**: Use `--json` with narrow field list.
 
-# WRONG - variable not declared
-gh api graphql -f id="<value>" -f query='
-mutation {
-  resolveReviewThread(input: {threadId: $id}) {
-    thread { id isResolved }
-  }
-}
-'
-```
+**GraphQL variable error**: Declare in signature: `mutation($id: ID!) { ... }` not `mutation { ... }`.
 
-### Authentication Issues
-
-**Error**: "❌ Not authenticated" or "authentication required"
-
-**Fix**: Check and update authentication status:
-
-```bash
-gh auth status         # Check current authentication
-gh auth logout         # Clear credentials
-gh auth login          # Re-authenticate
-gh auth login -s repo  # Request repo scope explicitly
-```
-
-**Required scopes**: `repo`, `gist`, `read:org`
-
-**Gotcha**: If `gh auth status` reports an invalid `GITHUB_TOKEN`, `gh` prefers it over keychain auth. Fix with:
-
-```bash
-unset GITHUB_TOKEN GH_TOKEN
-```
-
-### Repository Not Found
-
-**Error**: "repository not found" or "404"
-
-**Cause**: Either not in a git repository, or REST API shorthand doesn't resolve owner/repo.
-
-**Fix 1**: Verify you're in a git repository
-
-```bash
-git rev-parse --git-dir  # Should output .git or a path
-cd /path/to/repo         # Navigate to repository root
-```
-
-**Fix 2**: Don't use REST API shorthand, extract explicitly:
-
-```bash
-# WRONG - REST shorthand fails in some contexts
-gh api repos/:owner/:repo/pulls/<PR>/comments
-
-# CORRECT - explicit extraction
-OWNER=$(gh repo view --json owner -q .owner.login)
-REPO=$(gh repo view --json name -q .name)
-gh api repos/$OWNER/$REPO/pulls/<PR>/comments
-```
-
-### Debug Mode
-
-Enable debug output to see API calls and responses:
-
-```bash
-GH_DEBUG=api gh <command>
-```
-
-This shows the actual GraphQL/REST requests and responses, helpful for diagnosing query/mutation issues.
+**Debug**: `GH_DEBUG=api gh <command>` shows actual API calls.
