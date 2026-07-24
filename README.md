@@ -28,7 +28,7 @@ Keep only the skills you use installed. Their descriptions are always loaded for
 | `optimize-workspace-context` | Simplify and improve `AGENTS.md` or `CLAUDE.md`. | — |
 | `review-claude-config` | Audit Claude guidance and memory files. | — |
 | `review-claude-settings` | Audit Claude Code permission settings. | — |
-| `englog-cli` | Read or update an Englog daily journal, including session capture. | `englog` |
+| `englog` | Read or update an [Englog](http://github.com/jmlrt/englog) daily journal, including session capture. | `englog` |
 | `session-learnings` | Persist recurring session corrections in the narrowest useful guidance. | — |
 
 ## Principles

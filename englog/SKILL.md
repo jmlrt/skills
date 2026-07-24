@@ -1,11 +1,11 @@
 ---
-name: englog-cli
+name: englog
 description: Read, summarize, and update a date-based Englog journal through its CLI or Markdown files. Use when the user asks to capture session outcomes, inspect daily notes, or add todo, learning, note, or scratch entries.
 ---
 
 # Englog
 
-Use Englog as the source of truth for a dated daily journal. Default to read-only access; write only when the user asks to capture or update an entry.
+Use [Englog](http://github.com/jmlrt/englog) as the source of truth for a dated daily journal. Default to read-only access; write only when the user asks to capture or update an entry.
 
 ## Locate and read entries
 
