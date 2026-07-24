@@ -1,69 +1,43 @@
-# skills
+# Agent skills
 
-Personal agent skills for Claude Code and Cursor — GitHub, Jira, Buildkite, and PR workflows.
+Opinionated, public workflows for Claude Code, Codex, and Cursor. They cover repeatable tool use and review processes; project, company, account, and machine-specific rules belong in local guidance.
 
 ## Compatibility
 
-| Tool | Supported |
-|---|---|
-| Claude Code | Yes |
-| Cursor | Yes |
+Every skill uses the portable `name` and `description` metadata required by Codex. Some skills also include Claude Code `allowed-tools` metadata; other agents can ignore it.
 
-## Install
+- **Codex**: install or symlink selected skill folders under `~/.agents/skills/`, or a repository's `.agents/skills/`.
+- **Claude Code**: install with your preferred skill manager, or place selected folders under its skills directory.
+- **Cursor**: supports `SKILL.md` Agent Skills in its editor and CLI. Use its skill installation flow for placement; vendor-specific metadata can be ignored.
 
-```bash
-# Install all skills globally (into ~/.claude/skills/)
-npx skills add -g jmlrt/skills
-
-# Install into the current project only
-npx skills add jmlrt/skills
-
-# Selective install
-npx skills add -g jmlrt/skills --skill github --skill review-pull-request
-```
+Keep only the skills you use installed. Their descriptions are always loaded for discovery, so a smaller, focused set produces better matching.
 
 ## Skills
 
-| Skill | Description | Optional deps |
-|---|---|---|
-| `github` | Manage GitHub issues/PRs/repos using the `gh` CLI. Retrieve context, create/edit issues and PRs, manage workflows, resolve review threads. | `gh` CLI |
-| `pull-request` | **Author workflow**: Create and update PRs, then iterate on review feedback. Covers templates, title/body preferences, file validation. | `gh` CLI |
-| `review-pull-request` | **Reviewer workflow**: Validate PR readiness before merge. Single PR: full review with triage comments, code analysis, test execution, Jira alignment. Multiple PRs: parallel batch triage with summary table and decisions. | `gh` CLI; `jira` skill (optional) |
-| `python-development` | Production patterns for modern Python development: uv, ruff, ty, make, pre-commit. Type safety, separation of concerns, error handling, test organization. | None (reference only) |
-| `jira` | Read Jira tickets and epics using the Atlassian CLI (`acli`). Requires `{JIRA_BASE_URL}` configured. | `acli` CLI |
-| `buildkite` | Trigger and inspect Buildkite builds using the `bk` CLI. | `bk` CLI |
+| Skill | Purpose | Optional dependency |
+| --- | --- | --- |
+| `github` | `gh` CLI reads, writes, reviews, workflows, and troubleshooting. | `gh` |
+| `pull-request` | Author a focused pull request and address review feedback. | `git`, `gh` |
+| `review-pull-request` | Independently review one or more pull requests. | `git`, `gh` |
+| `triage-dependency-prs` | Classify dependency and backport PRs as close, rebase, order, stale, or ready for review. | `gh` |
+| `jira` | Retrieve Jira work-item context through `acli`. | `acli` |
+| `buildkite` | Trigger and investigate Buildkite builds through `bk`. | `bk` |
+| `python-development` | Apply concise Python implementation and review defaults. | — |
+| `golang-development` | Apply concise Go implementation and review defaults. | — |
+| `plan-with-review` | Produce an implementation plan and a separate QA pass. | — |
+| `optimize-workspace-context` | Simplify and improve `AGENTS.md` or `CLAUDE.md`. | — |
+| `review-claude-config` | Audit Claude guidance and memory files. | — |
+| `review-claude-settings` | Audit Claude Code permission settings. | — |
+| `englog-cli` | Read or update an Englog daily journal, including session capture. | `englog` |
+| `session-learnings` | Persist recurring session corrections in the narrowest useful guidance. | — |
 
-### Skill dependencies
+## Principles
 
-- `pull-request` uses the `github` skill for all `gh` CLI operations.
-- `review-pull-request` uses the `github` skill for all `gh` reads and the `jira` skill for ticket context (graceful fallback if not installed).
-- `python-development` is a reference skill (no external dependencies).
+- Default to read-only access for external systems; require an explicit request before writes.
+- Verify unstable CLI behavior against the installed version rather than treating a local workaround as universal.
+- Keep public skills free of organization names, personal paths, credentials, internal URLs, and account-specific policy.
+- Prefer repository-local guidance for repository conventions and private global guidance for personal workflow.
 
-## Configuration
+## Contributing
 
-### Jira base URL
-
-The `jira` skill uses `{JIRA_BASE_URL}` as a placeholder. Set your instance URL in your workspace `CLAUDE.md` or `AGENTS.md`:
-
-```markdown
-## Jira configuration
-JIRA_BASE_URL=https://yourorg.atlassian.net
-```
-
-## Local dev workflow
-
-```bash
-# Clone and install as symlinks (edits are picked up immediately)
-git clone git@github.com:jmlrt/skills.git ~/Code/jmlrt/skills/
-cd ~/Code/jmlrt/skills/
-npx skills add -g ./
-```
-
-After that, editing any `SKILL.md` file takes effect immediately — no reinstall needed.
-
-### Update
-
-```bash
-npx skills update          # update all installed skills
-npx skills check           # check for updates without installing
-```
+Read [SKILLS_STANDARD.md](SKILLS_STANDARD.md) before changing or adding a skill. Validate the frontmatter and re-read the changed workflow; do not add generic coding advice that a capable agent already knows.
