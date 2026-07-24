@@ -63,14 +63,20 @@ Creates a new pull request with comprehensive safety checks.
 
 ## Body Preferences
 
-**For feature/fix PRs**: Short **bullet list**. One bullet per main change; concise phrasing.
+**Outcome-focused, not implementation-focused.** Describe what the change *enables*, *replaces*, or *delivers* — not how it works internally. Reviewers can read the diff; they need context on why this matters and what it unblocks.
+
+- ❌ "Adds `FromFilename(filename, stackVersion string) (Package, error)` that infers type/arch/OS from the filename"
+- ✅ "Classifies artifact filenames into typed manifest entries, covering all package formats the RM currently handles"
+
+**For feature/fix PRs**: Short **bullet list**. One bullet per main change; outcome phrasing.
 
 **For refactoring/architectural PRs**: High-level **narrative format** (Problem → Solution → Impact) explaining why the changes matter. Include impact metrics or scope.
 
 **Always include**:
 - When the change has **measurable impact** (performance, reduced lines, security fixes): add a short **impact** block with before/after or what is skipped.
-- **Issue ticket**: Include "Issue ticket number and link"; use N/A when there is no ticket.
+- **Issue ticket**: Include the tracking issue link (cross-repo format if needed: `owner/repo#N`). If no issue is obvious from context, **ask the user** before writing N/A — don't assume there isn't one.
 - **Checklist**: Use `- [ ]` or `- [x]` per actual state; keep the template checklist and links at the bottom.
+- **Test plan scope**: checkboxes are for things verifiable during review, before merge, only. Anything that can only happen after merge (cutting a release, bumping a downstream pin, re-running an external integration test) goes in a separate plain-bullet "Follow-up" section — a checkbox implies verify-before-merge, and closed PRs don't get revisited to check boxes later.
 
 ### Example PR body (feature/fix)
 
@@ -161,7 +167,7 @@ Auto-exclude: `.gitignore` patterns, temp files, virtual envs, build artifacts
 ### Phase 3: Validate & Fix
 
 **Check files**:
-- ⚠️ No Claude artifacts (`.analysis`, `.claude`, `.report`, `.debug`)
+- ⚠️ No temporary agent artifacts (`.analysis`, `.report`, `.debug`)
 - ⚠️ No temp files (`.tmp`, `.lock`, `.swp`, `~`, `.DS_Store`)
 - ⚠️ No untracked files (should they be staged?)
 - ⚠️ No secrets (password, api_key, token, credential fields)
@@ -196,7 +202,6 @@ Brief summary from changed files
 - Key change 1
 - Key change 2
 
-Co-Authored-By: Claude Agent <noreply@anthropic.com>
 ```
 
 **PR description** (from commit message + testing status):
@@ -313,13 +318,13 @@ grep -rn "if.*> [0-9]\|== ['\"]" src/ | grep -v "test"
 ```
 
 **Safety checks during fixes:**
-- **CLAUDE.md/settings**: Flag if the PR modifies `CLAUDE.md`, `settings.json`, or permission files — treat as critical
+- **Agent instructions/settings**: Flag if the PR modifies `AGENTS.md`, `CLAUDE.md`, `settings.json`, or permission files — treat as critical
 - **Cross-codebase patterns**: If you flag a pattern, grep for same pattern elsewhere and fix all occurrences
 
 ### Phase 5: Verify Staged Files
 
 Before committing, check:
-- No Claude artifacts or temp files
+- No temporary agent artifacts or temp files
 - Only intended files are staged
 - If uncertain, unstage and verify
 
@@ -364,6 +369,35 @@ Batch resolve all threads using the github skill's batch resolve command.
 
 ---
 
+## Mark Ready for Review
+
+Before undrafting or requesting review, run and post local test evidence as a PR comment.
+
+### What to run
+
+Check repository agent instructions (such as `AGENTS.md` or `CLAUDE.md`) for a `## PR Review` section — it lists repo-specific tests tied to the files changed. Run whichever apply:
+
+- **Shell scripts / CI scripts**: run the changed logic in isolation with mocked inputs; cover the happy path, the rejection path, and edge cases (empty/null/missing values).
+- **Go pipeline generator**: generate pipeline YAML and diff against `main` (`./LOCAL/check-pipelines.sh` if available).
+- **Python code**: run the relevant pytest suite (`venv/bin/pytest tests/ -v`).
+- **Other**: run whatever `make test` / pre-commit hooks exercise for the changed files.
+
+### Posting results
+
+Post a comment on the PR with a summary table before marking ready. Example format:
+
+```
+| Test | Scenario | Result |
+|------|----------|--------|
+| T1   | happy path | ✅ pass |
+| T2   | rejection  | ✅ pass |
+| T3   | edge case  | ✅ pass |
+```
+
+If a test can't be run locally (requires live infra, secrets, or a full pipeline run), note that explicitly so reviewers know what coverage is missing.
+
+---
+
 ## Next: Request Review
 
-Once your fixes are pushed and comments resolved, request review from a maintainer. They'll use the **review-pull-request** skill to validate merge readiness.
+Once tests are posted and fixes are pushed, undraft and request review. Reviewers will use the **review-pull-request** skill to validate merge readiness.
