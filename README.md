@@ -16,20 +16,20 @@ Keep only the skills you use installed. Their descriptions are always loaded for
 
 | Skill | Purpose | Optional dependency |
 | --- | --- | --- |
-| `github` | `gh` CLI reads, writes, reviews, workflows, and troubleshooting. | `gh` |
-| `pull-request` | Author a focused pull request and address review feedback. | `git`, `gh` |
-| `review-pull-request` | Independently review one or more pull requests. | `git`, `gh` |
-| `triage-dependency-prs` | Classify dependency and backport PRs as close, rebase, order, stale, or ready for review. | `gh` |
-| `jira` | Retrieve Jira work-item context through `acli`. | `acli` |
 | `buildkite` | Trigger and investigate Buildkite builds through `bk`. | `bk` |
-| `python-development` | Apply concise Python implementation and review defaults. | — |
+| `englog` | Read or update an [Englog](http://github.com/jmlrt/englog) daily journal, including session capture. | `englog` |
+| `github` | `gh` CLI reads, writes, reviews, workflows, and troubleshooting. | `gh` |
 | `golang-development` | Apply concise Go implementation and review defaults. | — |
-| `plan-with-review` | Produce an implementation plan and a separate QA pass. | — |
+| `jira` | Retrieve Jira work-item context through `acli`. | `acli` |
 | `optimize-workspace-context` | Simplify and improve `AGENTS.md` or `CLAUDE.md`. | — |
+| `plan-with-review` | Produce an implementation plan and a separate QA pass. | — |
+| `pull-request` | Author a focused pull request and address review feedback. | `git`, `gh` |
+| `python-development` | Apply concise Python implementation and review defaults. | — |
 | `review-claude-config` | Audit Claude guidance and memory files. | — |
 | `review-claude-settings` | Audit Claude Code permission settings. | — |
-| `englog` | Read or update an [Englog](http://github.com/jmlrt/englog) daily journal, including session capture. | `englog` |
+| `review-pull-request` | Independently review one or more pull requests. | `git`, `gh` |
 | `session-learnings` | Persist recurring session corrections in the narrowest useful guidance. | — |
+| `triage-dependency-prs` | Classify dependency and backport PRs as close, rebase, order, stale, or ready for review. | `gh` |
 
 ## Principles
 
