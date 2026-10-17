@@ -17,7 +17,8 @@ Keep only the skills you use installed. Their descriptions are always loaded for
 | Skill | Purpose | Optional dependency |
 | --- | --- | --- |
 | `buildkite` | Trigger and investigate Buildkite builds through `bk`. | `bk` |
-| `englog` | Read or update an [Englog](http://github.com/jmlrt/englog) daily journal, including session capture. | `englog` |
+| `englog` | Read or update an [Englog](http://github.com/jmlrt/englog) daily time log. | `englog` |
+| `git-repos-cleanup` | Remove stale worktrees and pushed or merged local branches across many clones. | `git`, `gh` |
 | `github` | `gh` CLI reads, writes, reviews, workflows, and troubleshooting. | `gh` |
 | `golang-development` | Apply concise Go implementation and review defaults. | — |
 | `jira` | Retrieve Jira work-item context through `acli`. | `acli` |

@@ -45,6 +45,12 @@ Apply this skill when writing, maintaining, or reviewing Go code.
 
 ### Step 2: Apply when writing any code
 
+**Tooling defaults**: `golangci-lint` v2 with `default: all`; standard `make` targets `test`, `lint`, `fmt`, `build`.
+
+**Hermit Go vs Homebrew in pre-commit**: if a hook fails with "compile: version X does not match go tool version Y",
+chain the fix in one Bash call (a separate `unset` doesn't reach the next subprocess):
+`unset HERMIT_ENV GOROOT && eval "$(./bin/hermit env --activate)" && git add <files> && git commit -m "..."`
+
 **Linter compliance** — read the repository's golangci-lint configuration before changing code. Common rules that surprise people:
 - `noinlineerr`: split `if err := x(); err != nil` into two lines — see [patterns.md](patterns.md#error-handling)
 - `wsl_v5`: add a blank line before `if` when multiple statements precede it

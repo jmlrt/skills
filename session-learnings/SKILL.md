@@ -5,62 +5,55 @@ description: Extract recurring user corrections and tool failures from the curre
 
 # Session Learnings
 
-Turn repeated corrections and proven workflow discoveries into durable guidance so future sessions start closer to the desired result.
-
 ## Gather evidence
 
-Use the current conversation as the primary source. Also inspect relevant diffs and files named by the user. If the context was compacted and local guidance identifies a transcript facility, retrieve only the missing sections.
-
-Look for:
+Use the current conversation as the primary source. Look for:
 
 - Explicit user corrections or preferences.
-- Tool failures, wrong syntax, permission constraints, or failed fallback paths.
+- Tool failures, wrong syntax, or permission constraints.
 - Work that had to be redone because a workflow step was missed.
-- Stable ordering, placement, or project conventions.
 
-If none are present, say that no updates are needed. Do not create guidance merely to produce a change.
+If none are present, say so. Do not create guidance merely to produce a change.
 
 ## Decide what to retain
 
-Write a short rule only when it is reusable, specific, and supported by the session. Drop one-offs and transient state.
+Apply KISS/YAGNI before writing anything. A learning only earns a place in guidance if it passes **all** of:
+
+1. **Recurring** — likely to come up again, not a one-session quirk.
+2. **Non-obvious to an agent** — would the agent encounter this as a surprise, or can it be inferred from standard docs, normal error output, or the tool's default behavior? Environment-specific constraints (sandbox quirks, proxy TLS, denied paths) qualify; generic CLI usage and basic git hygiene don't.
+3. **Scoped to the target file** — local guidance (repo `CLAUDE.md`, `CLAUDE.local.md`) may include repo-specific content; global guidance (`~/.claude/CLAUDE.md`, skills, commands) must apply across repos, not just the current project.
+4. **Not already self-describing** — the error message or tool output already explains the fix clearly; no standing rule needed.
+
+**Reject** a candidate when it is:
+- A niche edge case unlikely to recur (e.g. one specific API field, one rare CLI flag combination).
+- Verbose enough to need a long explanation — if it can't be stated in 1–2 lines, it's probably too situational.
+- Already covered by the tool's own docs, error output, or a skill that owns that domain.
+- Standard practice that any engineer would apply without a reminder.
+
+When in doubt, leave it out. A shorter guidance file is more likely to be read and followed.
 
 | Learning | Home |
 | --- | --- |
-| Tool behavior, command syntax, or a repeatable tool workflow | The relevant skill or command guidance |
-| Durable workflow shared across projects | User-level guidance |
+| Tool behavior, command syntax, or repeatable workflow | The relevant skill or command guidance |
+| Durable workflow shared across projects | User-level guidance (CLAUDE.md) |
 | Repository or subsystem convention | The closest repository guidance |
-| Personal communication preference or user context | The active agent's memory or personal guidance, when available |
+| Personal preference or user context | Claude memory |
 
-Consult active-agent and repository guidance for the exact locations and capabilities available in the current environment. Prefer the narrowest scope that prevents repetition; do not duplicate the same rule across layers.
+Prefer the narrowest scope that prevents repetition; do not duplicate across layers.
+
+Resolve a skill's source with `readlink` before editing it. Never put employer-specific details in skills from a
+public repo; keep them in user-level guidance or a private skill instead.
 
 ## Apply the learning
 
-An explicit request for session learnings authorizes small, targeted updates to the selected guidance. Before editing, apply this filter:
-
-- Is the rule useful beyond this one session?
-- Does the selected file own this behavior?
-- Is the wording a short default with a clear exception, if needed?
-
-If the answer is no, omit the update or use a narrower home.
+Before editing, confirm: is the rule useful beyond this session and does the selected file own this behavior? If not, use a narrower home or omit.
 
 When updating guidance:
 
-- Fix misleading instructions instead of adding competing workarounds.
+- Fix misleading instructions instead of appending competing workarounds.
 - Preserve existing structure and local conventions.
-- Keep additions to 1–6 bullets unless a concise procedural sequence is necessary.
-- Add a verification step when a recurring failure is otherwise easy to repeat.
+- Keep additions to 1–6 bullets.
 
-## Validate and report
+## Report
 
-Re-read every edited section. Return:
-
-1. The learned rules and their rationale.
-2. Each file changed and why it was the right scope.
-3. Any candidate deliberately not retained.
-
-## Common patterns
-
-- Replace a wrong CLI example with the verified form rather than appending a warning.
-- Capture the reason behind a placement or ordering correction, not just the requested position.
-- Keep a command thin when its corresponding skill owns the full workflow.
-- Keep public skills generic; route environment- or user-specific behavior to private or local guidance.
+Return: (1) the learned rules and rationale, (2) each file changed and why, (3) any candidate deliberately not retained.

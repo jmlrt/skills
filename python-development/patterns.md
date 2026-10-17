@@ -237,6 +237,22 @@ class TestProcessCommand:
 - `monkeypatch` for env vars and module attributes
 - Shared fixtures in `conftest.py`
 
+**Module-level mutable state — `autouse` isolation is load-bearing:**
+When a script uses module-level dicts or sets (caches, registries, "used" trackers), an `autouse` fixture that patches and clears them is not optional. Without it, real data from committed config files silently changes test assertions — existing tests appear to pass when they are actually running against production state.
+
+```python
+import pytest
+from pytest_mock import MockerFixture
+import mymodule as m
+
+@pytest.fixture(autouse=True)
+def _isolate_state(mocker: MockerFixture) -> None:
+    mocker.patch.object(m, "REGISTRY", {})   # replace module-level dict
+    m._used.clear()                           # clear module-level set
+```
+
+Place this in `conftest.py` (applies to the whole suite) or at the top of any test file that touches module-level state.
+
 ```python
 # tests/conftest.py
 import pytest

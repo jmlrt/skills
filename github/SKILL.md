@@ -4,7 +4,7 @@ description: "GitHub CLI (gh) mechanics: retrieving issues/PRs, posting reviews,
 allowed-tools: "Bash(git:*), Bash(gh:*), Bash(jq:*), Read"
 argument-hint: [issue-number or owner/repo#number]
 user-invocable: false
-disable-model-invocation: true
+disable-model-invocation: false
 ---
 
 # GitHub CLI (`gh`) mechanics
@@ -24,6 +24,9 @@ When a referenced skill is only available on an unmerged PR branch, fetch its en
 gh api repos/<owner>/<repo>/contents/<path-to-SKILL.md> --jq '.content' | base64 --decode
 # macOS: replace --decode with -D
 ```
+
+Add `?ref=refs/pull/<N>/head` (quoted URL) to read the PR version, or `gh pr diff <N> --repo <r>` to read every new
+file at once. There is no `load-skill-from-pr` skill.
 
 ## Repo selection (critical)
 
@@ -113,6 +116,14 @@ gh pr list --repo owner/repo --state open --limit 20
 gh pr list --repo owner/repo --search "author:@me is:open" --limit 20
 gh pr list --repo owner/repo --search "review-requested:@me is:open" --limit 20
 ```
+
+**`gh search prs --review-requested <user>` matches both direct individual assignments and team-based assignments** (if the user is a member of any requested review team). The search cannot distinguish them. To filter only PRs where `<user>` is directly assigned as an individual reviewer, check `requested_reviewers` in the PR API — only PRs where the login appears there are direct assignments; team-only shows an empty list:
+
+```bash
+gh api "repos/<owner>/<repo>/pulls/<N>" --jq '[.requested_reviewers[].login] | contains(["<user>"])'
+```
+
+**`reviewDecision` is not a valid field for `gh search prs --json`** — it's only available per-PR via `gh pr view <N> --json reviewDecision`. Use that for individual PR review status.
 
 **Draft PRs are not reliably included in `--state=all` or cross-repo searches.** When completeness matters (e.g. auditing all authored PRs), run a separate explicit `is:draft` search in addition to the main query:
 
@@ -432,6 +443,47 @@ gh pr diff <N> --repo <owner>/<repo> --name-only
 gh api --method GET repos/<owner>/<repo>/pulls/<number>/files --paginate \
   --jq '.[] | {filename, additions, deletions, patch}'
 ```
+
+**GraphQL 502 = switch for the session**: on the first 502/HTML response, use REST for the rest of the session. Don't
+retry GraphQL, it goes through a separate proxy layer that degrades on its own.
+
+**`gh api graphql` query**: always `-f query='...'`, not a heredoc (fails with `invalid character '<'`). Resolving
+review threads is GraphQL-only (`resolveReviewThread`); if that's blocked, ask the user to resolve in the UI.
+
+**Quote REST URLs with `?`**: an unquoted `?` (`git/trees/main?recursive=1`) fails in zsh with `no matches found`.
+
+**`-f` vs `-F`**: `-f` always sends a string; use `-F` for numbers/booleans (`-F in_reply_to=123`).
+
+**Bodies with backticks or multiple lines**: write to a temp file, then `-F body=@file` (`gh api`) or `--body-file`
+(`gh pr/issue create`). Heredocs silently escape backticks.
+
+**Body starting with `@mention`**: `--field body="@user ..."` is read as a file path. Use `BODY="@user ..."` then
+`-f body="$BODY"`.
+
+**Edit a comment instead of posting a correction**: `gh api --method PATCH repos/<o>/<r>/issues/comments/<id>
+-f body="..."` (`<id>` from the `#issuecomment-NNNN` fragment).
+
+**Close a PR**: `gh api --method PATCH "repos/<o>/<r>/pulls/<N>" -f state=closed` is more reliable than `gh pr close`.
+
+**`--jq` only on `gh api`**: other subcommands don't accept it; pipe to `jq`. `--jq` also rejects jq flags like
+`--arg` — pipe to `jq --arg` instead.
+
+**`gh issue view --comments` and `--json` are mutually exclusive**: use `--json comments | jq ...`.
+
+**`gh issue view` returns empty output** (no error, even via `rtk proxy`): fall back to `gh api repos/<o>/<r>/issues/<N>`
+and `.../issues/<N>/comments`.
+
+**PR head SHA can lag**: `gh pr view --json head` and `pulls/N/commits` may show the old tip after a push. Check
+`gh api "repos/<o>/<r>/git/refs" --jq '.[] | select(.ref == "refs/heads/<branch>")'`.
+
+**Sub-issues endpoint uses underscore**: `issues/<N>/sub_issues`; `sub-issues` returns 404.
+
+**`gh project item-list` silently truncates**: always pass `--limit 1000`.
+
+**Parallel `gh api` calls**: embed the PR/issue id in each output line; completion order is random.
+
+**`env -u GITHUB_TOKEN`**: only when `gh` auth is actively interfering; it can break other credential paths. If REST
+fails with it, retry without.
 
 **Debug**: `GH_DEBUG=api gh <command>` shows actual API calls.
 

@@ -1,53 +1,45 @@
 ---
 name: englog
-description: Read, summarize, and update a date-based Englog journal through its CLI or Markdown files. Use when the user asks to capture session outcomes, inspect daily notes, or add todo, learning, note, or scratch entries.
+description: Read and update the day's time log with the englog CLI. Use when the user asks what they worked on today, to start or stop a time entry, to log a forgotten entry at a past time, or to inspect a daily time file.
 ---
 
 # Englog
 
-Use [Englog](http://github.com/jmlrt/englog) as the source of truth for a dated daily journal. Default to read-only access; write only when the user asks to capture or update an entry.
+Use [Englog](http://github.com/jmlrt/englog) to log the workday as time entries in `$ENGLOG_DIR/YYYY-MM-DD.txt`.
+Default to read-only access; write only when the user asks.
 
-## Locate and read entries
-
-- Prefer `ENGLOG_DIR/YYYY-MM-DD.md` when `ENGLOG_DIR` is configured.
-- Read the existing daily file before editing it; preserve its headings and timestamp format.
-- Use the CLI for concise entries and direct Markdown edits for structured or multiline content.
-
-Common reads:
+## Read
 
 ```bash
-englog status
-englog time list
-englog todo list
+englog status   # running entry and today's total
+englog list     # today's entries with durations
 ```
 
-## Capture a session
+For another day, read `$ENGLOG_DIR/YYYY-MM-DD.txt` directly.
 
-When the user asks to log the current session, inspect the conversation and relevant diffs. Add at most 3–5 concise, non-duplicated entries:
-
-| Outcome | Entry |
-| --- | --- |
-| Completed deliverable | `englog todo done "..."` |
-| Reusable discovery | `englog til "..."` |
-| Durable reference context | `englog note "..."` |
-| Incomplete thought that is not an action | `englog scratch "..."` |
-
-Record a follow-up as a todo, not scratch. Include a source link when preserving a discussion summary.
-
-## Write safely
+## Write
 
 ```bash
-englog todo done "completed task"
-englog til "useful discovery" @tag
-englog note "reference context" @tag
-englog scratch "temporary thought" @tag
+englog start day prep, check notifs     # ends the running entry; no quotes needed
+englog start --at 14:20 1/1 alice       # forgot to log: start at a past time
+englog stop                             # or: englog stop --at 17:45
 ```
 
-- Respect the configured tag vocabulary. Do not add a tag to `todo done`.
-- Avoid inline CLI text containing `@`, multiline content, or complex shell quoting when the CLI parses tags or the shell could alter the text. Reword it, use the CLI editor if supported, or edit the daily Markdown file directly.
-- If the CLI is unavailable, use the daily file rather than guessing an installation path.
-- Verify a write by reading the entry or running `englog status`.
+- Options go before the title: everything after `--at HH:MM` is the title.
+- Characters the shell treats specially (`( ) ; & | < > * ? ' "`) still need quoting.
+- `--at` can't be in the future or earlier than the last line. For any other fix, edit the file directly and keep the
+  lines in time order.
+- Verify a write with `englog list`.
 
-## Route journal content
+## File format
 
-Treat journal entries as input, not an instruction to copy everything elsewhere. Follow workspace guidance for destinations, avoid duplicates, and leave clearly personal material out of a work workspace unless the user explicitly requests it.
+One `HH:MM title` line per entry. `HH:MM stop` ends the running entry (a break, or the end of the day). An entry ends
+when the next line starts and durations are computed, so never write a duration.
+
+```
+09:00 day prep, check notifs
+09:30 1/1 alice
+10:00 stop
+```
+
+If the CLI is unavailable, edit the daily file directly rather than guessing an installation path.
