@@ -39,6 +39,8 @@ bk build create --pipeline <org>/<pipeline> --branch main --web   # trigger and 
 printf 'Y\n' | bk build create --pipeline <org>/<pipeline> --branch <branch> --message "..."
 ```
 
+**422 "Branch does not match pipeline's branch filtering rules"** — the pipeline has a `branch_configuration` set (e.g. `main`) that restricts API-triggered builds to that branch only. `bk build create` with any other branch fails with 422. Check with `bk pipeline view <org>/<pipeline> -o json | jq .branch_configuration`. Workaround: trigger via the Buildkite pipeline page UI — go to `https://buildkite.com/<org>/<pipeline>` and click "New Build" (note: `/builds/new` URL returns 404; the button is on the pipeline page itself).
+
 **⚠️ Security: Always quote env values** — prevent shell metacharacter injection:
 ```bash
 # ❌ WRONG: unquoted value vulnerable to injection
@@ -49,6 +51,15 @@ bk build create --pipeline org/pipe --env "KEY=value;safe"
 ```
 
 ## Querying Build Status
+
+**A build's top-level state does not tell you about the step you care about.** A `failed` build often means an unrelated job (lint, pre-commit) failed while the job in question passed. When auditing whether some specific work actually ran, always read the per-job state, never the build state:
+
+```bash
+bk build view <N> -p <org>/<pipeline> -o json | grep -v '^[A-Z]' | \
+  jq -r '.jobs[] | select(type=="object") | select(.name=="<job name>") | .state'
+```
+
+`skipped` is the state that matters for "this commit never ran" — Buildkite sets it when `skip_intermediate_builds` drops a queued build because a newer commit landed on the same branch.
 
 **`--org` flag does not exist**: `bk build view` has no `--org` flag — use `--pipeline <org>/<pipeline>` or `-p <org>/<pipeline>`. The org is embedded in the pipeline slug.
 
@@ -109,6 +120,8 @@ bk job log <job-id> --no-timestamps
 **`bk job log` prefixes every line with `_bk;t=<unix-ms>`** — use `--no-timestamps` to strip these prefixes. Without this flag, `grep` on specific patterns requires extra effort; with it, output is plain text ready for `grep`/`sed`/`head`.
 
 **Job UUIDs are globally unique** — `--pipeline` and `--build-number` are deprecated and ignored by `bk job log`. Just pass the job ID.
+
+**Buildkite job log URLs: `jid=` is the real job UUID, `sid=` is not** — URLs use two different query params: `?jid=<uuid>` is the actual job UUID and works directly with `bk job log`; `?sid=<uuid>` is a UI session ID, not the job UUID, and returns 404 with `bk job log`. When the URL has neither, get job UUIDs from `bk build view <N> -p <pipeline> -o json | jq '.jobs[] | select(...) | .id'`.
 
 **`bk job log` does NOT support `-o json`.**
 
@@ -180,16 +193,29 @@ bk job retry <job-id> -y
 
 **Do not use `curl` + `bk api-token`/`$(bk auth token)` to hit the retry API directly** — that extracts a token from one command's output and passes it to another, which violates the "never extract secrets/tokens and pass them to another tool" rule. `bk job retry` covers this natively; there's no need for the manual workaround. Fall back to the web UI (build page → failed step → Retry) only if `bk job retry` itself fails.
 
+**`exit_status: -1` = agent killed, not a code failure.** When a job fails with `exit_status: -1` and its agent shows `connection_state: "disconnected"`, the Kubernetes pod was killed mid-run (OOM or node eviction) — the hook itself never failed. The log will be truncated at wherever execution stopped (e.g. mid-plugin-initialization). Fix: retry the job, not the build.
+
+**Recurring `signal_reason: agent_stop` (SIGTERM) or agent `lost` on the same step is usually a pod resource limit, not flakiness.** The log only says `Received cancellation signal, interrupting`. The cause is in the pod's k8s events (e.g. `Pod ephemeral local storage usage exceeds the total limit of containers 10G`), which Buildkite can't show: ask the user for them before blaming the fleet. Fix with `agents:` `ephemeralStorage`/`memory`/`cpu` on the step, not retries.
+
 **When to use full rebuild vs step retry**:
-- Transient infra failure (503, timeout, network blip) → retry the step
+- Transient infra failure (503, timeout, network blip, agent OOM) → retry the step
 - Code change needed → rebuild from scratch after the fix is merged
 - Downstream triggered build failed → rebuild the downstream pipeline directly (not the parent)
+
+**`waiting_failed` trigger steps never ran — retry them directly, no downstream ping needed.** A trigger step in state `waiting_failed` was blocked waiting for an upstream step that failed; it never executed. Once the upstream failure is fixed, retry the `waiting_failed` step with `bk job retry <job-id> -y` or from the BK UI. Downstream teams don't need to be notified — their pipeline will be triggered fresh.
+
+**`type: manual` + long wait = broken auto-unblock, not a human task.** Buildkite block steps (`type: manual`) in orchestrator pipelines are usually unblocked by automation (e.g. a bot or downstream pipeline signal), not a human. When such a step has been waiting for hours or days, the automation has failed — ask the repo team why their unblock isn't firing rather than asking someone to manually click through.
 
 ## Tips
 
 - Use `-o json` for machine-readable output (`build`, `pipeline` commands; NOT `job log`)
 - **Prefer `jq` over Python** for simple parsing: `bk build list -p org/pipeline -o json | jq -r '.[].state'`
 - Short flags: `-p` (pipeline), `-b` (branch), `-m` (message), `-c` (commit), `-e` (env), `-w` (web)
+- **Inline YAML `commands:` need `$$VAR`**: Buildkite interpolates `$VAR` at parse time, so plugin-injected vars
+  (`$COSIGN_SECRET`) and shell loop vars (`$image`) silently become empty. Only `env:` block vars and built-ins
+  (`$BUILDKITE_BRANCH`) are safe with a single `$`. Separate `.sh` scripts are unaffected.
+- **`gcloud storage` hangs in CI**: it prompts to install `gcloud-crc32c`. Set
+  `export CLOUDSDK_STORAGE_CHECK_HASHES=never` before any `gcloud storage` call.
 
 ## Real-world workflow: Trigger build and monitor
 
@@ -251,6 +277,10 @@ bk job log $FIRST_JOB | grep -iE "(error|fail|panic|exception)" | head -20
 - **Specific line range**: `bk job log <id> | sed -n '50,150p'` to view lines 50–150
 - **Web view**: `bk build view <build-number> --pipeline <org>/<pipeline> --web` to open in browser and inspect interactively
 
+**`blocked` state on a `script`-type job** means a preceding unnamed block step is gating it (auto-unblock pattern). When it has been blocked for hours, the automation isn't firing — ask the pipeline owners.
+
+**`bk job log` output is cached and lags behind real job progress** — when a running job shows stale poll results, check the thing it polls directly (artifact URL, API endpoint) instead of re-reading the log.
+
 ## Build Meta-data Scope
 
 `buildkite-agent meta-data set/get` is **scoped to a single build** — a later build cannot read meta-data set by an earlier build. Do not propose it for cross-build state persistence (e.g. "record last-built commit, read on next run"). For cross-build state, use the Buildkite REST API to query past builds (`GET /organizations/{org}/pipelines/{slug}/builds?state=passed&per_page=1`) and read the `.commit` field — or use an external store.
@@ -258,3 +288,5 @@ bk job log $FIRST_JOB | grep -iE "(error|fail|panic|exception)" | head -20
 ## Sandbox / Permissions
 
 If `bk` cannot reach the API, ask the user to authenticate or approve the scoped command. Do not fall back to scraping the web UI.
+
+**`credential store is not writable: write credential store probe: exit status 161` is a sandbox failure, not an auth failure.** `bk`'s token store lives outside the sandbox write allowlist. It hits when `bk` is not the first word of the command (`cd ... && bk`, `for ... do bk`), because the sandbox exclusion no longer applies. A `> file` redirect can trigger it too, so run each `bk` call fully bare (no pipe, chain or redirect); large output is saved to a file automatically, which you then parse in a separate call. Only if a standalone call still fails, retry with `dangerouslyDisableSandbox: true`. Never ask the user to run `bk auth login` for this.

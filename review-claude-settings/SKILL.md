@@ -1,6 +1,6 @@
 ---
 name: review-claude-settings
-description: Audit Claude Code settings.json files — global (~/.claude/settings.json) and per-repo (.claude/settings.json, .claude/settings.local.json) — for permission consolidation, redundancy, and security risks. Use when asked to "review settings.json", "audit claude settings", "clean up permissions", "check what should be global vs repo", or "security review of settings".
+description: Audit Claude Code settings.json files — global (~/.claude/settings.json) and per-repo (.claude/settings.json, .claude/settings.local.json) — for security risks, CLAUDE.md policy conflicts, stale entries, and permission consolidation. Use whenever the user asks to review, audit, validate, clean up, trim, or modernize Claude Code settings or permissions, asks "anything to update in my config", or asks about settings for a new model or Claude Code version.
 allowed-tools: Read, Glob, Bash(find:*), Bash(grep:*), Bash(jq:*), Bash(ls:*), Edit, Write
 ---
 
@@ -80,10 +80,28 @@ Apply this checklist to the **global** settings file first, then each repo file.
 
 For each of the following CLAUDE.md policies, verify no permission pre-approves the contradicted action:
 
-- "Never push without explicit instruction" → `Bash(git push *)` must NOT be in allow list
-- "Never merge via CLI" → `Bash(gh pr merge *)` must NOT be in allow list
-- "Always ask before posting to GitHub" → `Bash(gh pr comment *)`, `Bash(gh issue comment *)` must NOT be in allow list
+Read the global and repo CLAUDE.md files, then check every rule that restricts an action against the allow list. Wildcards count: `Bash(gh pr *)` pre-approves `gh pr merge` and `gh pr comment`. Examples:
+
+- "Never merge via CLI" → nothing matching `gh pr merge` may be allowed
+- "Always ask before posting to GitHub" → nothing matching `gh pr comment`, `gh issue comment` or `gh pr review` may be allowed
 - "No secrets in code or commits" → no credential-exposing commands like `Bash(env)` with no path restriction
+- Deny rules must not block actions CLAUDE.md prescribes (e.g. `git push --force*` also blocks `--force-with-lease`)
+
+If CLAUDE.md explicitly allows something (e.g. "`git push` is allowed in sandbox"), treat it as intentional and do not flag it.
+
+---
+
+## Phase 3b: Hygiene
+
+- **Stale skill references**: compare `Skill(...)` allow entries and `skillOverrides` keys against the skills actually available in the session. Flag names that no longer exist and near-matches that look renamed. Flag a skill that is both allowed and `"off"`.
+- **Duplicate or legacy keys**: e.g. a flat key that duplicates a nested one (`voiceEnabled` vs `voice.enabled`).
+- **Model settings**: report `model`, `effortLevel` and `modelSettings`; flag per-model entries that repeat the global value or reference models no longer in use.
+- **Validity**: `jq -e .` on every file.
+- **`settings.local.json` one-offs**: it accumulates per-command approvals. Keep only general rules (preferences,
+  accepted-risk destructive commands like `rm:*`, external writes like `gh api:*`); flag specific commands and
+  one-off paths for removal.
+
+Only flag keys you can confirm are wrong or duplicated; never invent setting names.
 
 ### excludedCommands review
 
@@ -132,33 +150,14 @@ Use these when replacing wildcards.
 
 ## Phase 5: Report
 
-Present findings as structured tables before any changes. Group by severity:
+Present findings as numbered bullets (no tables) before any changes, grouped under Critical / High / Medium / Hygiene / Consolidation. Each bullet: file + line, the entry, the risk in one clause, the proposed fix.
 
 ```
-## Findings
-
 ### Critical
-| # | File        | Permission         | Risk                          | Proposed fix            |
-|---|------------|-------------------|-------------------------------|-------------------------|
-| 1 | global      | Bash(cat *)        | Reads sensitive files outside Read restrictions | Remove |
-| 2 | global      | Bash(git *)        | Pre-approves git push/reset/clean | Replace with safe list |
-
-### High
-| # | File        | Permission         | Risk                          | Proposed fix            |
-|---|------------|-------------------|-------------------------------|-------------------------|
-
-### Medium
-| # | File        | Permission         | Risk                          | Proposed fix            |
-|---|------------|-------------------|-------------------------------|-------------------------|
-
-### Consolidation
-| # | Permission         | Present in                            | Proposed fix                 |
-|---|-------------------|---------------------------------------|------------------------------|
-| 1 | Bash(jq *)         | repo-a, repo-b, repo-c               | Move to global; remove from repos |
-| 2 | Bash(gh pr list *) | global + repo-d                      | Remove from repo-d (duplicate) |
+1. global:21 `Bash(gh pr *)` pre-approves `gh pr merge` → replace with read-only gh pr subcommands
 ```
 
-If no findings in a category, state "No findings."
+Omit empty categories.
 
 ---
 
@@ -169,6 +168,7 @@ After presenting the report, ask: **"Apply all? Or specify which numbers to appl
 - For global changes, edit the target of `~/.claude/settings.json` when it is a symlink.
 - Use targeted `Edit` calls per finding; do not rewrite entire files.
 - Re-read each edited section after applying to confirm the change landed.
+- Auto mode may deny edits to permissions/sandbox sections as self-modification. Don't retry or work around it; finish the other edits, then give the user the exact replacement JSON for each blocked change.
 - Do not create `settings.json` files that did not previously exist — if a repo has no `.claude/settings.json`, skip it.
 
 ---

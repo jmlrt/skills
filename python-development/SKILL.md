@@ -48,6 +48,9 @@ Detect the mode from the user's request before acting:
 
 ### Step 2: Apply these rules when writing any code
 
+**Toolchain:** `uv` (`uv run`, `uv sync`), `ruff` (check + format), `mypy` or `ty`, `pytest`; `make` targets `test`,
+`lint`, `fmt`, `check`. Some older repos use `poetry` or `hermit` — check the `Makefile` first.
+
 **Functions and modules:**
 - Every function and module gets a docstring summary (one line is enough; add more lines only when behavior is non-obvious)
 - Every function gets full type hints using modern syntax (`str | None`, `list[str]`, not `Optional`, not `Union`)

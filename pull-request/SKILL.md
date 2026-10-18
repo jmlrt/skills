@@ -63,10 +63,19 @@ Creates a new pull request with comprehensive safety checks.
 
 ## Body Preferences
 
+**Match the repo**: before writing, read one merged PR in the same repo (`gh pr view <N>`) and mirror its sections.
+
+**Cross-fork PRs**: `gh pr create --head fork:branch --repo upstream` fails with "not all refs are readable" when
+upstream doesn't know the fork. From the fork checkout: `git push fork <branch>:<branch>`, then
+`gh pr create --repo upstream --head <user>:<branch>`.
+
 **Outcome-focused, not implementation-focused.** Describe what the change *enables*, *replaces*, or *delivers* — not how it works internally. Reviewers can read the diff; they need context on why this matters and what it unblocks.
 
 - ❌ "Adds `FromFilename(filename, stackVersion string) (Package, error)` that infers type/arch/OS from the filename"
 - ✅ "Classifies artifact filenames into typed manifest entries, covering all package formats the RM currently handles"
+
+**Only what the diff does and why.** Leave out investigation side-findings (why old closed PRs reappear, history of
+related fixes, other PRs' root causes); they confuse reviewers. Put them in chat or the tracking issue.
 
 **For feature/fix PRs**: Short **bullet list**. One bullet per main change; outcome phrasing.
 
