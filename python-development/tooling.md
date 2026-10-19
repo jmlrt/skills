@@ -1,19 +1,8 @@
 # Python Tooling: Greenfield Templates
 
-Copy-paste templates for new projects. For brownfield guidance, see SKILL.md.
-
-## Quick Navigation
-
-- [pyproject.toml Template](#greenfield-pyprojecttom) — hatchling, uv, dependency-groups
-- [Makefile Template](#greenfield-makefile) — install, test, lint, typecheck, format, check
-- [.pre-commit-config.yaml](#pre-commit-hooks) — ruff + ty enforcement
-- [Brownfield Minimal Makefile](#brownfield-minimal-makefile) — works with any project
-
----
+Templates for new projects. Replace `my_project` / `my-project`, and bump pinned versions to current releases.
 
 ## Greenfield pyproject.toml
-
-Use this as your starting template for new projects:
 
 ```toml
 [build-system]
@@ -68,7 +57,6 @@ known-first-party = ["my_project"]
 packages = ["src/my_project"]
 ```
 
----
 
 ## Greenfield Makefile
 
@@ -113,7 +101,6 @@ clean:  ## Remove build artifacts
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
 ```
 
----
 
 ## Greenfield .pre-commit-config.yaml
 
@@ -141,56 +128,3 @@ repos:
         pass_filenames: false
         stages: [commit]
 ```
-
----
-
-## Greenfield Setup (First Time)
-
-```bash
-# Create .python-version file
-echo "3.12" > .python-version
-
-# Install dependencies
-make install
-
-# Run all checks
-make check
-
-# You're ready
-git add .
-git commit -m "Initial project setup"
-```
-
----
-
-## Brownfield: Minimal Makefile
-
-If working with legacy code, use just this:
-
-```makefile
-.PHONY: help install test lint check clean
-
-help:
-	@echo "install - install dependencies"
-	@echo "test - run tests"
-	@echo "lint - run linter"
-	@echo "check - lint + test"
-	@echo "clean - remove artifacts"
-
-install:
-	pip install -e ".[dev]" || uv sync
-
-test:
-	pytest
-
-lint:
-	ruff check .
-
-check: lint test
-
-clean:
-	rm -rf build/ dist/ *.egg-info .pytest_cache .coverage
-	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
-```
-
-This works with any project structure.

@@ -169,7 +169,7 @@ Do **not** close PRs flagged REBASE, ORDER, or STALE without explicit user instr
 - When in doubt about supersession (e.g., different files, different dependency names), flag as **REVIEW** rather than CLOSE.
 - For a Renovate dependency bump, check whether another open PR removes the same dependency. If so, classify the bump as **CLOSE** with the removal PR as its reason.
 - For backport PRs: check the version on the **backport branch**, not main — a branch may already have a higher version independently.
-- For hermit binary bumps (`bin/.pkg` files + symlink): treat the `.pkg` rename and the symlink update as a single atomic change; a PR that only does one half is incomplete, not superseded.
+- For binary-manager bumps that change both a version marker file and a symlink (or similar paired files): treat both as a single atomic change; a PR that only does one half is incomplete, not superseded.
 - Confidence is **never very high** for a major version bump unless the changelog explicitly confirms no breaking changes and the dep is test-only or dev-tooling.
 - When you cannot fetch the changelog (private registry, rate limit, etc.), cap confidence at **medium** and note the missing data.
 - Never approve or merge as part of triage. Use `review-pull-request` for an independent review and follow the repository's approval policy.

@@ -16,21 +16,19 @@ Keep only the skills you use installed. Their descriptions are always loaded for
 
 | Skill | Purpose | Optional dependency |
 | --- | --- | --- |
-| `buildkite` | Trigger and investigate Buildkite builds through `bk`. | `bk` |
 | `englog` | Read or update an [Englog](http://github.com/jmlrt/englog) daily time log. | `englog` |
+| `git` | Worktree, commit, rebase, and push conventions. | `git` |
 | `git-repos-cleanup` | Remove stale worktrees and pushed or merged local branches across many clones. | `git`, `gh` |
 | `github` | `gh` CLI reads, writes, reviews, workflows, and troubleshooting. | `gh` |
 | `golang-development` | Apply concise Go implementation and review defaults. | — |
-| `jira` | Retrieve Jira work-item context through `acli`. | `acli` |
-| `optimize-workspace-context` | Simplify and improve `AGENTS.md` or `CLAUDE.md`. | — |
-| `plan-with-review` | Produce an implementation plan and a separate QA pass. | — |
 | `pull-request` | Author a focused pull request and address review feedback. | `git`, `gh` |
 | `python-development` | Apply concise Python implementation and review defaults. | — |
-| `review-claude-config` | Audit Claude guidance and memory files. | — |
+| `review-claude-config` | Audit and optimize Claude or `AGENTS.md` guidance and memory files. | — |
 | `review-claude-settings` | Audit Claude Code permission settings. | — |
 | `review-pull-request` | Independently review one or more pull requests. | `git`, `gh` |
 | `session-learnings` | Persist recurring session corrections in the narrowest useful guidance. | — |
 | `triage-dependency-prs` | Classify dependency and backport PRs as close, rebase, order, stale, or ready for review. | `gh` |
+| `untracked-secrets-scan` | Find untracked files that may hold secrets across local clones. | `git` |
 
 ## Principles
 
