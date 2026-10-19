@@ -8,96 +8,44 @@ disable-model-invocation: true
 
 # Pull Request Workflow (Author)
 
-Create and update pull requests as an author: prepare PRs, push for review, then address reviewer feedback.
+| Mode | Triggers |
+|------|----------|
+| **Create** | "create a PR", "open a PR", "submit for review" |
+| **Iterate** | "address PR review", "fix PR feedback", "address review comments" |
 
----
+Reviewers use the **review-pull-request** skill.
 
-## Which Phase Are You In?
+## Create
 
-| Phase | Triggers | Details |
-|-------|----------|---------|
-| **CREATE** | "create a PR", "make a pull request", "open a PR", "submit for review" | [→ See CREATE section below](#create-mode-new-pr) |
-| **ITERATE** | "address PR review", "fix PR feedback", "address review comments" | [→ See ITERATE section below](#iterate-mode-address-feedback) |
+1. Branch from the repo's default branch explicitly (`git checkout -b <branch> origin/<default>`) and rebase on it before pushing.
+2. Ask which files to stage; stage only those. Never stage temp files, agent artifacts, build output, or secrets.
+3. Run the repo's pre-commit hooks and test/lint targets (skip tests for docs-only changes). Update CHANGELOG/README when the repo expects it.
+4. Show the commit message, title, and body, then ask: "Ready to push and create the PR?" Proceed only on an explicit yes.
+5. Push and create a **draft** PR by default (`gh pr create --draft --body-file <file>`). Keep temp message files out of the repo.
 
-When your PR is ready to merge, reviewers use the **review-pull-request** skill to validate.
+**Cross-fork PRs**: `gh pr create --head fork:branch --repo upstream` fails with "not all refs are readable" when upstream doesn't know the fork. Push to the fork, then `gh pr create --repo upstream --head <user>:<branch>`.
 
----
+### Title
 
-## Prerequisites
+Short, scoped, action-oriented: `Scope: what the PR does` (e.g. `CLI: add retry flag for transient errors`). Human-readable, not a raw Conventional Commit line; no ticket prefix unless the repo requires it.
 
-Before starting any mode, ensure:
-- You're in a git repository
-- GitHub CLI is installed and authenticated (`gh auth login`)
-- You have write access to the repository
+### Body
 
----
-
-# CREATE Mode: New PR
-
-Creates a new pull request with comprehensive safety checks.
-
-## PR Template and Structure
-
-- **If the repo has a pull request template** in `.github/pull_request_template.md` or `.github/PULL_REQUEST_TEMPLATE/`, always use it.
-- Use the template's section headings and checklist in the PR body. Fill in each section; keep any links (e.g. Contributing guide) at the bottom.
-- **If there is no template**, still apply the title and body preferences below.
-- Do not add or change the template file itself unless explicitly requested.
-
-## Workflow
-
-1. **Setup**: Fetch latest, rebase feature branch
-2. **Files**: Select files to stage
-3. **Validate & Fix**: Check artifacts/secrets, run pre-commit hooks
-4. **Test & Document**: Run tests, update CHANGELOG/README/docstrings
-5. **Commit & Push**: Create commit message, push to origin
-6. **Create PR**: Push branch, create draft PR via gh-cli, clean up temp files
-
----
-
-## Title Preferences
-
-- **Short, scoped, action-oriented.** Prefer: `Scope: what the PR does`.
-- Examples: `CLI: add retry flag for transient errors`, `Pipelines: add step for X`.
-- Human-readable summary, not a raw Conventional Commit line.
-- No ticket prefixes in the title unless the team convention requires it.
-
-## Body Preferences
-
-**Match the repo**: before writing, read one merged PR in the same repo (`gh pr view <N>`) and mirror its sections.
-
-**Cross-fork PRs**: `gh pr create --head fork:branch --repo upstream` fails with "not all refs are readable" when
-upstream doesn't know the fork. From the fork checkout: `git push fork <branch>:<branch>`, then
-`gh pr create --repo upstream --head <user>:<branch>`.
-
-**Outcome-focused, not implementation-focused.** Describe what the change *enables*, *replaces*, or *delivers* — not how it works internally. Reviewers can read the diff; they need context on why this matters and what it unblocks.
-
-- ❌ "Adds `FromFilename(filename, stackVersion string) (Package, error)` that infers type/arch/OS from the filename"
-- ✅ "Classifies artifact filenames into typed manifest entries, covering all package formats the RM currently handles"
-
-**Only what the diff does and why.** Leave out investigation side-findings (why old closed PRs reappear, history of
-related fixes, other PRs' root causes); they confuse reviewers. Put them in chat or the tracking issue.
-
-**For feature/fix PRs**: Short **bullet list**. One bullet per main change; outcome phrasing.
-
-**For refactoring/architectural PRs**: High-level **narrative format** (Problem → Solution → Impact) explaining why the changes matter. Include impact metrics or scope.
-
-**Always include**:
-- When the change has **measurable impact** (performance, reduced lines, security fixes): add a short **impact** block with before/after or what is skipped.
-- **Issue ticket**: Include the tracking issue link (cross-repo format if needed: `owner/repo#N`). If no issue is obvious from context, **ask the user** before writing N/A — don't assume there isn't one.
-- **Checklist**: Use `- [ ]` or `- [x]` per actual state; keep the template checklist and links at the bottom.
-- **Test plan scope**: checkboxes are for things verifiable during review, before merge, only. Anything that can only happen after merge (cutting a release, bumping a downstream pin, re-running an external integration test) goes in a separate plain-bullet "Follow-up" section — a checkbox implies verify-before-merge, and closed PRs don't get revisited to check boxes later.
-
-### Example PR body (feature/fix)
+- **Use the repo's PR template** (`.github/pull_request_template.md` or `.github/PULL_REQUEST_TEMPLATE/`) if present; fill each section, keep its links at the bottom, don't edit the template. Otherwise mirror a recent merged PR (`gh pr view <N>`).
+- **Outcome, not implementation**: what the change enables or replaces, not how the code works. Reviewers can read the diff.
+- **Only what the diff does and why**: leave investigation side-findings for chat or the tracking issue.
+- Feature/fix: short bullet list, one per main change. Refactor: brief Problem → Solution → Impact narrative.
+- Add an impact block (before/after) when the change is measurable.
+- Link the tracking issue (`owner/repo#N` cross-repo). If none is obvious, ask before writing N/A.
+- Checkboxes reflect actual state and cover only what can be verified before merge. Post-merge steps (release, downstream bump) go in a plain-bullet "Follow-up" section.
 
 ```markdown
 ## Describe your changes
 
-- Extract dependency installation into setup script
-- Reuse existing virtualenv when requirements unchanged
+- Extract dependency installation into a setup script
+- Reuse the existing virtualenv when requirements are unchanged
 
-**Pre-commit duration impact:**
-- **Before this PR:** ~49s total
-- **After this PR:** ~12s total (90% faster)
+**Pre-commit duration:** ~49s before, ~12s after
 
 ## Issue ticket
 
@@ -107,306 +55,28 @@ Closes #123
 - [x] Tests pass locally
 ```
 
-### Example PR body (refactoring/architectural)
+## Iterate
 
-```markdown
-## Problem
+1. Find the PR for the current branch (`gh pr view --json number`).
+2. Fetch all review threads, including inline comments (`gh pr view` omits them; use `gh api repos/<o>/<r>/pulls/<n>/comments` or GraphQL `reviewThreads` for thread ids and resolution state).
+3. Triage each as must-fix, enhancement, or NIT and get user approval on what to fix.
+4. Apply fixes. For each pattern flagged, search the codebase for the same pattern and fix all occurrences rather than waiting for the next review round. Treat changes to agent instructions, settings, or permission files as sensitive.
+5. Stage only the intended files, run pre-commit and tests, commit, and push (no force push unless you rebased; then `--force-with-lease`).
+6. Resolve addressed threads (GraphQL `resolveReviewThread`) and reply where a comment was declined or needs explanation. Summarize what was fixed, skipped, and why.
 
-[1-2 sentences: What's broken, confusing, or suboptimal]
+## Mark ready for review
 
-## Solution
+Before undrafting or requesting review:
 
-[How you're fixing it, organized by theme]
-
-## Impact
-
-[User/maintainer/operational benefits]
-
-## Metrics
-
-- [Before/after stats: lines, complexity, performance, security]
-```
-
-## CREATE Instructions
-
-### Phase 1: Setup
-
-**Always branch from the repo's default branch** (usually `main`) explicitly: `git checkout -b <branch> main`.
-
-```bash
-git fetch origin
-CURRENT_BRANCH=$(git branch --show-current)
-
-# Infer default branch from origin (e.g., main or master)
-DEFAULT_BRANCH=$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's|^origin/||')
-if [ -z "$DEFAULT_BRANCH" ]; then
-  DEFAULT_BRANCH="main"
-fi
-
-# If on main/master, ask for feature branch name and create it from the default branch
-if [ "$CURRENT_BRANCH" = "main" ] || [ "$CURRENT_BRANCH" = "master" ]; then
-  echo "Enter feature branch name:"
-  read -r FEATURE_BRANCH
-  git checkout -b "$FEATURE_BRANCH" "origin/$DEFAULT_BRANCH"
-else
-  FEATURE_BRANCH=$CURRENT_BRANCH
-fi
-
-# Rebase on the default branch
-if ! git merge-base --is-ancestor "origin/$DEFAULT_BRANCH" HEAD; then
-  GIT_EDITOR=true git rebase "origin/$DEFAULT_BRANCH" || {
-    echo "❌ Rebase conflict. Resolve manually, retry."
-    git rebase --abort
-    exit 1
-  }
-fi
-echo "✅ Up-to-date with $DEFAULT_BRANCH"
-```
-
-### Phase 2: File Selection
-
-```bash
-git status --porcelain
-# Ask user: which files to stage?
-# Offer categories: Modified | Untracked | All
-```
-
-Auto-exclude: `.gitignore` patterns, temp files, virtual envs, build artifacts
-
-### Phase 3: Validate & Fix
-
-**Check files**:
-- ⚠️ No temporary agent artifacts (`.analysis`, `.report`, `.debug`)
-- ⚠️ No temp files (`.tmp`, `.lock`, `.swp`, `~`, `.DS_Store`)
-- ⚠️ No untracked files (should they be staged?)
-- ⚠️ No secrets (password, api_key, token, credential fields)
-
-**Run pre-commit fixes**:
-```bash
-git diff --cached | grep -iE '(password|secret|api[_-]?key|token|credential)["\s]*[:=]' && { exit 1; }
-make pre-commit || make format  # Auto-fix linting/formatting
-```
-
-### Phase 4: Test & Document
-
-**Run tests** (skip for docs-only changes):
-```bash
-STAGED=$(git diff --cached --name-only)
-if echo "$STAGED" | grep -vqE '\.(md|txt)$'; then
-  make test || { echo "❌ Tests failed"; exit 1; }
-fi
-```
-
-**Update documentation** (if code changed):
-- [ ] CHANGELOG.md (if repo uses one)
-- [ ] README (for user-facing changes)
-- [ ] Function docstrings
-
-### Phase 5: Prepare Commit & PR
-
-**Commit message** (summarizing changes):
-```markdown
-Brief summary from changed files
-
-- Key change 1
-- Key change 2
+- Run the tests relevant to the changed files. Check repo agent instructions (`AGENTS.md`, `CLAUDE.md`) for a `## PR Review` section listing repo-specific checks. For scripts, exercise the happy path, the rejection path, and empty/missing inputs.
+- Post the evidence as a PR comment, for example:
 
 ```
-
-**PR description** (from commit message + testing status):
-```markdown
-## Summary
-[From commit message]
-
-## Changes
-[From git diff summary]
-
-## Testing
-- Tests: ✅ Passing
+| Test | Scenario   | Result |
+|------|------------|--------|
+| T1   | happy path | pass   |
+| T2   | rejection  | pass   |
 ```
 
-Save both to `COMMIT_MESSAGE.md` and `PR_DESCRIPTION.md`.
-
-### Phase 6: Push & Create PR
-
-**Before proceeding**: Confirm that you're ready to push to origin and create the PR. Review the commit message and PR body one more time if needed.
-
-**Confirmation**: Ask the user: "Ready to push to origin and create PR? (yes/no)"
-
-Only proceed if user explicitly confirms.
-
-**Options**: Draft by default; use `--repo <owner/repo>` for non-current repo; use `Closes #X` in body for issue linkage.
-
-**If confirmed:**
-
-```bash
-git commit -F COMMIT_MESSAGE.md
-git push -u origin $FEATURE_BRANCH
-
-gh pr create \
-  --base main \
-  --head $FEATURE_BRANCH \
-  --draft \
-  --title "<auto-generated-title>" \
-  --body-file PR_DESCRIPTION.md
-
-# Cleanup temp files
-rm -f COMMIT_MESSAGE.md PR_DESCRIPTION.md
-echo "✅ PR created"
-```
-
----
-
-# ITERATE Mode: Address Feedback
-
-Address review feedback on an existing PR.
-
-## Workflow
-
-1. **Auto-detect PR**: Find PR from current branch
-2. **Fetch comments**: Get all review comments via GitHub API
-3. **Categorize**: Sort as must-fix/enhancement/NIT
-4. **Fix & validate**: Apply fixes, run tests, scan for similar patterns
-5. **Commit & resolve**: Commit fixes, mark comments resolved
-6. **Summary**: Show what was done
-
----
-
-## ITERATE Instructions
-
-### Phase 1: Auto-detect PR
-
-```bash
-PR=$(gh pr view --json number -q .number 2>/dev/null) || {
-  echo "❌ No open PR for current branch"
-  exit 1
-}
-echo "✅ Found PR #$PR"
-```
-
-### Phase 2: Fetch Comments
-
-```bash
-OWNER=$(gh repo view --json owner -q .owner.login)
-REPO=$(gh repo view --json name -q .name)
-gh api repos/$OWNER/$REPO/pulls/$PR/comments \
-  --jq '.[] | {id, path, line, body}' > /tmp/pr_comments.json
-```
-
-### Phase 3: Categorize Comments
-
-Triage each comment as:
-- **Must-fix**: Safety, correctness, required standards
-- **Enhancement**: Improvements, consistency, best practices
-- **NIT**: Formatting, cosmetic (can skip)
-
-Summarize for user approval: "Fix X must-fixes and Y enhancements? (y/n)"
-
-### Phase 4: Apply Fixes
-
-For each must-fix and enhancement:
-1. Read affected file (use Read tool)
-2. Apply fix based on comment
-3. Stage file: `git add <file>`
-
-**After each fix:**
-- Re-read the changed block to confirm correctness
-- **Proactively scan the codebase for the same pattern** — don't wait for next review cycle
-- Fix all occurrences found in the codebase
-
-Common grep patterns:
-```bash
-# Broad exception handlers
-grep -rn "except Exception:" src/
-
-# Missing validation
-grep -rn "\.exists()" src/ | grep -v "is_dir"
-
-# Hardcoded values
-grep -rn "if.*> [0-9]\|== ['\"]" src/ | grep -v "test"
-```
-
-**Safety checks during fixes:**
-- **Agent instructions/settings**: Flag if the PR modifies `AGENTS.md`, `CLAUDE.md`, `settings.json`, or permission files — treat as critical
-- **Cross-codebase patterns**: If you flag a pattern, grep for same pattern elsewhere and fix all occurrences
-
-### Phase 5: Verify Staged Files
-
-Before committing, check:
-- No temporary agent artifacts or temp files
-- Only intended files are staged
-- If uncertain, unstage and verify
-
-### Phase 6: Security & Tests
-
-Same checks as CREATE mode:
-- Secrets check
-- Pre-commit validation
-- Tests (skip docs-only)
-- Documentation validation
-
-### Phase 7: Commit & Push
-
-```bash
-git commit -m "fix: address review feedback
-
-- Addressed X comments
-- Applied Y improvements"
-
-git push origin $(git branch --show-current)
-```
-
-### Phase 8: Resolve Comments
-
-After fixes are pushed, mark comments as resolved:
-
-```bash
-# For each fixed comment
-THREAD_ID=<thread-id>
-gh api graphql -f id="$THREAD_ID" -f query='
-mutation($id: ID!) {
-  resolveReviewThread(input: {threadId: $id}) {
-    thread { id isResolved }
-  }
-}
-'
-
-echo "✅ Comment resolved"
-```
-
-Batch resolve all threads using the github skill's batch resolve command.
-
----
-
-## Mark Ready for Review
-
-Before undrafting or requesting review, run and post local test evidence as a PR comment.
-
-### What to run
-
-Check repository agent instructions (such as `AGENTS.md` or `CLAUDE.md`) for a `## PR Review` section — it lists repo-specific tests tied to the files changed. Run whichever apply:
-
-- **Shell scripts / CI scripts**: run the changed logic in isolation with mocked inputs; cover the happy path, the rejection path, and edge cases (empty/null/missing values).
-- **Go pipeline generator**: generate pipeline YAML and diff against `main` (`./LOCAL/check-pipelines.sh` if available).
-- **Python code**: run the relevant pytest suite (`venv/bin/pytest tests/ -v`).
-- **Other**: run whatever `make test` / pre-commit hooks exercise for the changed files.
-
-### Posting results
-
-Post a comment on the PR with a summary table before marking ready. Example format:
-
-```
-| Test | Scenario | Result |
-|------|----------|--------|
-| T1   | happy path | ✅ pass |
-| T2   | rejection  | ✅ pass |
-| T3   | edge case  | ✅ pass |
-```
-
-If a test can't be run locally (requires live infra, secrets, or a full pipeline run), note that explicitly so reviewers know what coverage is missing.
-
----
-
-## Next: Request Review
-
-Once tests are posted and fixes are pushed, undraft and request review. Reviewers will use the **review-pull-request** skill to validate merge readiness.
+- State explicitly what couldn't be run locally (live infra, secrets, full pipeline) so reviewers know the coverage gap.
+- Then undraft (`gh pr ready`) and request review, after user confirmation.

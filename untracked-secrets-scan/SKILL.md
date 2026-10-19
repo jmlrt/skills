@@ -49,7 +49,7 @@ Run as `bash scan.sh > "$SCRATCH/scan.out"` with `run_in_background`, then read 
 Raw output is ~1,400 lines, mostly noise. Cut it down:
 
 ```bash
-grep -v -e '/venv/' -e '/\.hermit/' -e '/site-packages/' -e '\.pyc$' -e '/\.terraform/' -e '/\.terragrunt-cache/' \
+grep -v -e '/venv/' -e '/site-packages/' -e '\.pyc$' -e '/\.terraform/' -e '/\.terragrunt-cache/' \
   -e 'settings.local.json' "$SCRATCH/scan.out"
 ```
 

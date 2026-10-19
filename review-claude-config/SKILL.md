@@ -1,12 +1,19 @@
 ---
 name: review-claude-config
-description: Audit the ecosystem of Claude config files — global CLAUDE.md, per-repo CLAUDE.md and CLAUDE.local.md, memory files, and skills — for redundancy, inconsistency, outdated facts, and misplaced content. Use when asked to "review CLAUDE.md", "audit claude config", "clean up claude files", or "check what should be global vs local".
+description: Audit and optimize agent config files — a single CLAUDE.md or AGENTS.md, or the whole ecosystem of global and per-repo CLAUDE.md, CLAUDE.local.md, memory files, and skills — for redundancy, inconsistency, outdated facts, and misplaced content. Use when asked to "review CLAUDE.md", "optimize CLAUDE.md/AGENTS.md", "audit claude config", "clean up claude files", or "check what should be global vs local".
 allowed-tools: Read, Glob, Bash(find:*), Bash(grep:*), Edit, Write
 ---
 
 # Review Claude Config
 
-Audits the full ecosystem of Claude config files and produces a structured findings report. Changes require explicit confirmation before applying.
+Audits and optimizes agent config files and produces a structured findings report. Changes require explicit
+confirmation before applying.
+
+Two modes:
+
+- **Single file** (user names one `CLAUDE.md` / `AGENTS.md`): run Phase 2 and the Optimization checks on that file
+  only, then Report and Apply.
+- **Ecosystem audit** (default): run all phases.
 
 ## Scope
 
@@ -74,6 +81,26 @@ For each repo's `CLAUDE.md` / `CLAUDE.local.md`:
 
 ---
 
+## Optimization Checks (any file)
+
+**Inconsistency detection** — beyond outright contradictions, look for: the same concept under different names, two
+workflows describing the same process with different steps or order, conflicting naming or directory conventions,
+and mixed formatting for the same kind of content. Resolve to the most specific, most recent, or most referenced
+version; when both are valid in different contexts, keep both with the condition stated. Never pick silently when
+the authoritative version is unclear: ask.
+
+**What to move where**:
+
+- Detailed step-by-step workflow already in a skill or instruction file → replace with a 1-3 line summary + reference.
+- Rule that applies to every repo → global file; repo-specific convention → that repo's file.
+- Personal or machine-specific detail in a team-shared file → `CLAUDE.local.md`.
+- Human-only notes, history, evolution notes, generic advice the model already knows → remove.
+- Several examples of one concept → keep one, genericized.
+
+Size reduction is a byproduct, not the goal.
+
+---
+
 ## Phase 5: Report
 
 Present findings as a structured table before any changes. Group by severity:
@@ -112,6 +139,9 @@ After presenting the report, ask: **"Apply all? Or specify which numbers to appl
 - For repo file edits: same — targeted edits only.
 - For memory/skill promotions: add the rule to the appropriate section in global CLAUDE.md; do not delete the source unless it is truly redundant.
 - Re-read each edited section after applying to confirm the change landed correctly.
+- **Verify preservation**: diff the file before/after and check every removed actionable rule (commands, flags,
+  paths, constraints, checklists) either still exists elsewhere in the file, moved to a referenced location, or was
+  an approved removal. Report anything else as lost and restore it.
 
 ---
 
