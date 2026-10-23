@@ -46,6 +46,11 @@ For each existing thread, classify `can resolve` (addressed or correctly dismiss
 - Changes to agent instructions, settings, or permission files: flag unsafe loosening or escalation as Critical.
 - Skill files: instructions an agent can't act on ("ask in #channel") should become "surface to the user and stop".
 - Comment only on lines the PR changed.
+- Lead with merge risk: regressions, and whether the PR was actually exercised (pipelines run from the PR branch, tests
+  on current HEAD). Say so if it wasn't.
+- Backport claims need evidence: find the branch point with `git merge-base origin/main origin/<branch>` and check
+  `git branch -r --contains <sha>` before saying a change does or doesn't need a backport. Check the PR for missing
+  backport labels.
 
 ### 4. Tests
 
@@ -67,7 +72,8 @@ Don't mention: stdlib behavior, standard idioms, harmless defensive code, micro-
 
 Writing:
 - Informal and question-led; no preamble. Prefer questions over assertions where the author owns the domain. Inline comments 2-4 sentences.
-- Bug-fix suggestions include a concrete diff or snippet.
+- Don't babysit the author: point at what needs to change and why, not a copy-paste-ready fix (exact values, step-by-step rewrites, full option lists). A diff or snippet only when the fix is non-obvious.
+- Don't commit the user or their team to follow-up actions or dates in a review.
 - Version recommendations say why not each alternative.
 - Near-merge PRs: open with a brief positive assessment and frame remaining items as advisory.
 - With no Critical findings, recommend approving with Suggestions and NITs as optional follow-ups.
