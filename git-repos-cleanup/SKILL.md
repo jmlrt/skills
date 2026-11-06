@@ -5,8 +5,15 @@ description: "Clean up stale git worktrees and local branches across many local 
 
 # Git repos cleanup
 
-Removes worktrees and local branches whose work is already on a remote. Anything that could lose work is reported and
+Removes worktrees and local branches whose work is already on GitHub. Keep only what holds work that exists solely on
+this laptop: uncommitted changes, or commits on no remote and in no PR. Never keep a branch or worktree just because it
+is recent, unmerged or might be useful: the user recreates it if needed. Anything that could lose work is reported and
 needs explicit approval.
+
+**On GitHub** means either `git branch -r --contains <sha>` is non-empty, or the commit exists on the forge:
+`gh api repos/<owner/repo>/commits/<sha> --jq .sha` succeeds. The second catches squash-merged PR heads, deleted remote
+branches and closed PRs, whose commits stay reachable on GitHub. Say in the report that this API can also match
+fork-only commits.
 
 ## Scope
 
@@ -22,19 +29,22 @@ needs explicit approval.
 List extra worktrees per repo (`git worktree list --porcelain`, skipping the first entry, the main checkout). For each:
 
 - Dirty: `git -C <wt> status --porcelain` is non-empty.
-- Unpushed: `git -C <wt> log --oneline HEAD --not --remotes` is non-empty. A detached HEAD is judged the same way.
+- Unpushed: the HEAD commit is not on GitHub (see above). `git -C <wt> log --oneline HEAD --not --remotes` only counts
+  commits missing from remote-tracking refs, so it overstates for squash-merged PRs: confirm with the commits API.
+  A detached HEAD is judged the same way.
 
-Remove clean and fully pushed worktrees with `git worktree remove <wt>` (no `--force`; it refuses if dirty). Keep the
-branches. List the dirty or unpushed ones to the user. Use `--force` only after they approve those specific
-worktrees, because uncommitted changes are lost. Afterwards `rmdir` an emptied worktree directory (such as
-`.worktrees/`); it refuses if anything is left.
+Remove clean worktrees whose HEAD is on GitHub with `git worktree remove <wt>` (no `--force`; it refuses if dirty), then
+delete their branch in step 2 too. List the dirty or unpushed ones to the user. Use `--force` only after they approve
+those specific worktrees, because uncommitted changes are lost. Afterwards `rmdir` an emptied worktree directory (such
+as `.worktrees/`); it refuses if anything is left.
 
 ## 2. Local branches
 
 Skip the checked-out branch, `main`/`master`, and any branch checked out in a worktree (git refuses to delete it).
 
-**Pushed.** If `git branch -r --contains <tip>` (ignoring `HEAD ->` lines) is non-empty, `git branch -D <branch>` is safe
-because the commits survive on the remote.
+**Pushed.** If `git branch -r --contains <tip>` (ignoring `HEAD ->` lines) is non-empty, or the tip exists on GitHub
+(commits API), `git branch -D <branch>` is safe because the commits survive there. This includes branches that are
+behind or diverged from their upstream, and branches whose worktree you just removed.
 
 **Merged by PR.** Squash and rebase merges are invisible to ancestry checks, so for the remaining branches ask the
 forge:
@@ -97,4 +107,8 @@ are on no remote. Offer follow-ups for the kept branches rather than acting on t
   block that defines its own helper and variables.
 - Dropping stashes shifts the indices of the rest: drop from the highest index down, and do not reuse an index after a
   drop.
+- `git worktree remove` fails with `Operation not permitted` under `.claude/worktrees/` inside the sandbox, and a loop of
+  `git` calls can lose the sandbox exclusion. It may still delete part of the directory: run `git worktree prune`, then
+  retry with `dangerouslyDisableSandbox: true`. A leftover unregistered directory (not a worktree any more) is removed
+  with `rm -rf`, which needs the user to run it if the sandbox blocks it.
 - Verify afterwards: `git worktree list` shows only the main checkout, and the kept-branch list matches the report.
