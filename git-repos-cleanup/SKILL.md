@@ -107,8 +107,8 @@ are on no remote. Offer follow-ups for the kept branches rather than acting on t
   block that defines its own helper and variables.
 - Dropping stashes shifts the indices of the rest: drop from the highest index down, and do not reuse an index after a
   drop.
-- `git worktree remove` fails with `Operation not permitted` under `.claude/worktrees/` inside the sandbox, and a loop of
-  `git` calls can lose the sandbox exclusion. It may still delete part of the directory: run `git worktree prune`, then
-  retry with `dangerouslyDisableSandbox: true`. A leftover unregistered directory (not a worktree any more) is removed
-  with `rm -rf`, which needs the user to run it if the sandbox blocks it.
+- If the agent's sandbox refuses `git worktree remove` (permission error), retrying in a loop of `git` calls can lose the
+  sandbox exclusion and may still delete part of the directory. Instead: run `git worktree prune` to drop the stale
+  registration, then hand the user one self-contained command block to run themselves — the removal, plus `rm -rf` of any
+  leftover unregistered directory.
 - Verify afterwards: `git worktree list` shows only the main checkout, and the kept-branch list matches the report.
