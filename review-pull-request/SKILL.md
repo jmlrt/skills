@@ -15,6 +15,7 @@ Default to **polish mode**; switch when the user asks.
 
 - **Polish** (default): inline comments per finding, NITs requested in-PR, plus a summary comment.
 - **Ship-it** ("urgent", "pragmatic", "skip NITs"): critical issues only, one review comment, NITs consolidated into an "optional follow-up" block, bias toward approval.
+- **Intent** (design/plan PRs, or "intent", "high-level"): check alignment with the linked docs (PSI, FAQ, issue) only, no code-level findings or deep subagent review. Ask which stance when a PR is mostly docs/plan and the user didn't say.
 - **KISS/YAGNI** ("KISS", "simplify", "keep me honest"): after the correctness pass, ask "is this the simplest correct solution?" Flag unnecessary abstractions, speculative features, over-documented internals, structures where a scalar suffices.
 
 ## Single PR review
@@ -78,6 +79,7 @@ Writing:
 - Near-merge PRs: open with a brief positive assessment and frame remaining items as advisory.
 - With no Critical findings, recommend approving with Suggestions and NITs as optional follow-ups.
 - Approvals include the commands run and key output, never a bare "LGTM".
+- No "Assisted-by" or AI attribution line in reviews or comments.
 - Only findings introduced or perpetuated by the PR go in the review; pre-existing security issues go in a separate tracking issue.
 
 ## Write operations

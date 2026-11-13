@@ -1,11 +1,12 @@
 # Agent skills
 
-Opinionated, public workflows for Claude Code, Codex, and Cursor. They cover repeatable tool use and review processes; project, company, account, and machine-specific rules belong in local guidance.
+Opinionated, public workflows for Vibe, Claude Code, Codex, and Cursor. They cover repeatable tool use and review processes; project, company, account, and machine-specific rules belong in local guidance.
 
 ## Compatibility
 
 Every skill uses the portable `name` and `description` metadata required by Codex. Some skills also include Claude Code `allowed-tools` metadata; other agents can ignore it.
 
+- **Vibe**: place selected skill folders under `~/.vibe/skills/`, or a repository's `.vibe/skills/`.
 - **Codex**: install or symlink selected skill folders under `~/.agents/skills/`, or a repository's `.agents/skills/`.
 - **Claude Code**: install with your preferred skill manager, or place selected folders under its skills directory.
 - **Cursor**: supports `SKILL.md` Agent Skills in its editor and CLI. Use its skill installation flow for placement; vendor-specific metadata can be ignored.
@@ -18,7 +19,7 @@ Keep only the skills you use installed. Their descriptions are always loaded for
 | --- | --- | --- |
 | `englog` | Read or update an [Englog](http://github.com/jmlrt/englog) daily time log. | `englog` |
 | `git` | Worktree, commit, rebase, and push conventions. | `git` |
-| `git-repos-cleanup` | Remove stale worktrees and pushed or merged local branches across many clones. | `git`, `gh` |
+| `git-repos-cleanup` | Remove stale worktrees and local branches whose work is already on GitHub, across many clones. | `git`, `gh` |
 | `github` | `gh` CLI reads, writes, reviews, workflows, and troubleshooting. | `gh` |
 | `golang-development` | Apply concise Go implementation and review defaults. | — |
 | `pull-request` | Author a focused pull request and address review feedback. | `git`, `gh` |
@@ -39,4 +40,4 @@ Keep only the skills you use installed. Their descriptions are always loaded for
 
 ## Contributing
 
-Read [SKILLS_STANDARD.md](SKILLS_STANDARD.md) before changing or adding a skill. Validate the frontmatter and re-read the changed workflow; do not add generic coding advice that a capable agent already knows.
+Read [SKILLS_STANDARD.md](SKILLS_STANDARD.md) before changing or adding a skill. Validate the frontmatter and re-read the changed workflow; do not add generic coding advice that a capable agent already knows. Agents working in this repo read the root [AGENTS.md](AGENTS.md), which enforces this standard as a checklist.
