@@ -1,11 +1,12 @@
 # Agent skills
 
-Opinionated, public workflows for Claude Code, Codex, and Cursor. They cover repeatable tool use and review processes; project, company, account, and machine-specific rules belong in local guidance.
+Opinionated, public workflows for Vibe, Claude Code, Codex, and Cursor. They cover repeatable tool use and review processes; project, company, account, and machine-specific rules belong in local guidance.
 
 ## Compatibility
 
 Every skill uses the portable `name` and `description` metadata required by Codex. Some skills also include Claude Code `allowed-tools` metadata; other agents can ignore it.
 
+- **Vibe**: place selected skill folders under `~/.vibe/skills/`, or a repository's `.vibe/skills/`.
 - **Codex**: install or symlink selected skill folders under `~/.agents/skills/`, or a repository's `.agents/skills/`.
 - **Claude Code**: install with your preferred skill manager, or place selected folders under its skills directory.
 - **Cursor**: supports `SKILL.md` Agent Skills in its editor and CLI. Use its skill installation flow for placement; vendor-specific metadata can be ignored.
@@ -39,4 +40,4 @@ Keep only the skills you use installed. Their descriptions are always loaded for
 
 ## Contributing
 
-Read [SKILLS_STANDARD.md](SKILLS_STANDARD.md) before changing or adding a skill. Validate the frontmatter and re-read the changed workflow; do not add generic coding advice that a capable agent already knows.
+Read [SKILLS_STANDARD.md](SKILLS_STANDARD.md) before changing or adding a skill. Validate the frontmatter and re-read the changed workflow; do not add generic coding advice that a capable agent already knows. Agents working in this repo read the root [AGENTS.md](AGENTS.md), which enforces this standard as a checklist.
