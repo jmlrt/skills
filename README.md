@@ -18,7 +18,7 @@ Keep only the skills you use installed. Their descriptions are always loaded for
 | --- | --- | --- |
 | `englog` | Read or update an [Englog](http://github.com/jmlrt/englog) daily time log. | `englog` |
 | `git` | Worktree, commit, rebase, and push conventions. | `git` |
-| `git-repos-cleanup` | Remove stale worktrees and pushed or merged local branches across many clones. | `git`, `gh` |
+| `git-repos-cleanup` | Remove stale worktrees and local branches whose work is already on GitHub, across many clones. | `git`, `gh` |
 | `github` | `gh` CLI reads, writes, reviews, workflows, and troubleshooting. | `gh` |
 | `golang-development` | Apply concise Go implementation and review defaults. | — |
 | `pull-request` | Author a focused pull request and address review feedback. | `git`, `gh` |

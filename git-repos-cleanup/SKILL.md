@@ -1,6 +1,6 @@
 ---
 name: git-repos-cleanup
-description: "Clean up stale git worktrees and local branches across many local clones. Use when asked to prune, clean up, or delete old worktrees or local branches that are pushed or merged, in one repo or in every repo under a directory."
+description: "Clean up stale git worktrees and local branches across many local clones. Use when asked to prune, clean up, or delete old worktrees or local branches whose work is already on GitHub, in one repo or in every repo under a directory."
 ---
 
 # Git repos cleanup
