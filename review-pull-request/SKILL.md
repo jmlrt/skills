@@ -21,7 +21,17 @@ Default to **polish mode**; switch when the user asks.
 
 ### Pre-flight: author check
 
-Compare the PR author and every commit author against the requester (`gh api user`). GitHub doesn't let authors approve their own PRs, and a bot PR can carry a human fixup commit. If the requester authored it, say so first and offer to request another reviewer; don't do a full review only to flag this at the end.
+Compare the PR author and every commit author against the requester (`gh api user`). GitHub doesn't let authors approve their own PRs, and a bot PR can carry a human fixup commit. If the requester authored it, say so first and switch to self-review mode; don't do a full review only to flag this at the end.
+
+### Self-review mode (requester's own PR)
+
+- Full independent review (sections 1-4), ideally from a fresh session rather than the one that wrote the code, against the linked spec or issue
+- No approval and nothing posted to the PR
+- Ends with a fix prompt in the handoff format from the global agent instructions (fix variant): printed in chat, or written to the handoff location when the fix happens in a later session. The fix happens in a dev session, not this one
+
+### Reviewer scope (others' PRs)
+
+Local checkout or rebase to run tests, and re-running CI, are fine. Never push to the PR branch (rebase, conflict fix, code change): when something on the requester's side needs a code change, end with a handoff instead.
 
 ### 1. Context
 
@@ -55,6 +65,8 @@ For each existing thread, classify `can resolve` (addressed or correctly dismiss
 ### 4. Tests
 
 Run the repo's tests for the changed code and report pass/fail with output; note whether failures are pre-existing. For infra-as-code, cite the CI plan output instead of planning locally. Check claimed manual tests, run the gaps you can, and propose exact commands for the rest. If evidence comes from a CI build, confirm it ran on (or near) the current HEAD.
+
+When a spec or issue is linked, check each acceptance criterion and run its verification commands; report each as met or not met with the output.
 
 ### 5. Final output
 
