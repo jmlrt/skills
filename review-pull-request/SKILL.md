@@ -27,7 +27,7 @@ Compare the PR author and every commit author against the requester (`gh api use
 
 - Full independent review (sections 1-4), ideally from a fresh session rather than the one that wrote the code, against the linked spec or issue
 - No approval and nothing posted to the PR
-- Ends with a fix prompt in the handoff format from the global agent instructions (fix variant): printed in chat, or written to the handoff location when the fix happens in a later session. The fix happens in a dev session, not this one
+- Ends with a fix prompt containing the PR reference, actionable findings, relevant spec or issue and acceptance criteria, and verification commands/results. Use the global agent instructions' handoff format (fix variant) if defined; otherwise use these fields. Print it in chat unless an explicit handoff destination is configured for a later session. The fix happens in a dev session, not this one
 
 ### Reviewer scope (others' PRs)
 
