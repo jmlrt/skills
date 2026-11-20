@@ -34,6 +34,11 @@ Not required for doc-only repos (listed in your user-level CLAUDE.md).
 - Formatter hooks (shfmt, black, end-of-file-fixer) fix files in place when they fail the commit: `git add` the
   reformatted files and retry.
 
+- **Committing one hunk of a file that also holds someone else's edits** (shared index, `git add -p` unavailable,
+  `git commit -- <path>` takes the whole file): copy the index to a temp file (`GIT_INDEX_FILE`), `read-tree HEAD`,
+  `update-index --cacheinfo` with a blob of HEAD plus only your hunk, `write-tree`, `commit-tree`, then `update-ref
+  HEAD <new> <old>` and `git reset -q -- <paths>` on the real index. Pass `-c commit.gpgsign=false` where unsigned.
+
 ## Rebase
 
 - Rebase, never merge commits on feature branches (`pull.rebase = true`).
