@@ -83,15 +83,37 @@ Branch cleanup skips the checked-out branch, so also survey each repo for these.
   regenerable. To test whether one landed, compare the lines it adds with the default branch, because the default has
   moved on and a whole-file or patch-apply comparison reports false divergence. A dropped stash is not restorable in
   the normal way, so print its SHA first (`git stash store <sha>` brings it back).
-- **Dirty or unpushed default-branch checkouts, untracked files.** Report only. Untracked files can be local content
-  that exists nowhere else, so never delete them without a specific go-ahead.
+- **Unpushed default-branch checkouts, untracked files.** Report only. Untracked files can be local content
+  that exists nowhere else, so never delete them without a specific go-ahead. Dirty tracked files go to step 5.
 - **Archived upstreams.** `gh repo view <owner/repo> --json isArchived,isFork` flags clones of archived repos and forks.
   List them; whether to delete the clone is the user's call.
 - **Large ignored artifacts.** For the biggest working trees, list the largest entries from
   `git status --porcelain --ignored` with sizes (virtualenvs, `node_modules`, build output, toolchain caches). Report
   only: never run `git clean -x`, and treat toolchain caches as needed.
 
-## 5. Report
+## 5. Uncommitted work
+
+Survey every repo's main checkout and every kept worktree: `git -C <repo> status --short` (tracked changes; untracked
+files are step 4). For each dirty repo run `git -C <repo> --no-pager diff HEAD` (staged and unstaged) and summarize what changed in a line
+or two per file, flagging noise (key reordering, whitespace) and deletions of tracked files. Ask the user to confirm or
+correct the suspicious changes before proposing anything. Then, per repo, propose one path-scoped commit (only files
+from the survey, never `git add -A`) and:
+
+- **Repo without a remote**: commit locally, no PR. Follow the repo's signing convention.
+- **Repo with a remote**: resolve the remote name and default branch first (`git -C <repo> remote`, `git -C <repo>
+  symbolic-ref refs/remotes/<remote>/HEAD`), and check that the edits do not depend on local-only commits. Commit on a
+  worktree branch (`git worktree add --no-track -b <branch> .worktrees/<topic> <remote>/<default>`, then apply the
+  change there), push with an explicit refspec (`git push -u <remote> <branch>:refs/heads/<branch>`) and open a draft
+  PR. First check for an open PR the user owns in that repo (`gh pr list -R <owner/repo> --author @me --state open`)
+  and offer adding the commit to it instead.
+
+Never commit, push or open a PR without approval. When the environment blocks git writes in a repo, hand the user the
+approved commands as one self-contained block covering every repo, and re-run the survey afterwards.
+
+Verify each repo after writing: the source checkout no longer shows the committed edits (`git status --short`), and
+the pushed branch SHA and the PR (new or existing) match the commit (`git ls-remote <remote> <branch>`, `gh pr view`).
+
+## 6. Report
 
 End with, per category: removed, kept and why, and anything the user must run themselves. Print the tip SHA of every
 deleted branch so it can be restored with `git branch <name> <sha>` from the reflog. Flag deleted branches whose commits
