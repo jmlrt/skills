@@ -150,4 +150,3 @@ After presenting the report, ask: **"Apply all? Or specify which numbers to appl
 - Never rewrite an entire file unless the user explicitly asks.
 - Never silently resolve cross-repo inconsistencies — always present both versions and ask which wins.
 - Do not promote repo-specific content to global just because it appears in multiple repos; check whether it is genuinely universal first.
-- Line length ≤120 characters in CLAUDE.md files.
