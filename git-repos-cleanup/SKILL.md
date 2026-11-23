@@ -94,20 +94,24 @@ Branch cleanup skips the checked-out branch, so also survey each repo for these.
 ## 5. Uncommitted work
 
 Survey every repo's main checkout and every kept worktree: `git -C <repo> status --short` (tracked changes; untracked
-files are step 4). For each dirty repo run `git --no-pager diff` and summarize what changed in a line or two per file,
-flagging noise (key reordering, whitespace) and deletions of tracked files. Ask the user to confirm or correct the
-suspicious changes before proposing anything. Then, per repo, propose one path-scoped commit (only files from the
-survey, never `git add -A`) and:
+files are step 4). For each dirty repo run `git -C <repo> --no-pager diff HEAD` (staged and unstaged) and summarize what changed in a line
+or two per file, flagging noise (key reordering, whitespace) and deletions of tracked files. Ask the user to confirm or
+correct the suspicious changes before proposing anything. Then, per repo, propose one path-scoped commit (only files
+from the survey, never `git add -A`) and:
 
-- **Repo without a remote** (e.g. Notes): commit with `--no-gpg-sign`, no PR.
-- **Repo with a remote**: commit on a worktree branch (`git worktree add --no-track -b jmlrt/<topic>
-  .worktrees/<topic> origin/main`, then apply the change there), push with an explicit refspec
-  (`git push -u origin <branch>:refs/heads/<branch>`) and open a draft PR. First check for an open PR the user owns in
-  that repo (`gh pr list -R <owner/repo> --author @me --state open`) and offer adding the commit to it instead.
+- **Repo without a remote**: commit locally, no PR. Follow the repo's signing convention.
+- **Repo with a remote**: resolve the remote name and default branch first (`git -C <repo> remote`, `git -C <repo>
+  symbolic-ref refs/remotes/<remote>/HEAD`), and check that the edits do not depend on local-only commits. Commit on a
+  worktree branch (`git worktree add --no-track -b <branch> .worktrees/<topic> <remote>/<default>`, then apply the
+  change there), push with an explicit refspec (`git push -u <remote> <branch>:refs/heads/<branch>`) and open a draft
+  PR. First check for an open PR the user owns in that repo (`gh pr list -R <owner/repo> --author @me --state open`)
+  and offer adding the commit to it instead.
 
-Never commit, push or open a PR without approval. When the sandbox blocks git writes in a repo (`index.lock`: Operation
-not permitted), write one self-contained bash script in the workspace scratch dir covering every repo and hand it as
-`! bash <path>`; delete it afterwards.
+Never commit, push or open a PR without approval. When the environment blocks git writes in a repo, hand the user the
+approved commands as one self-contained block covering every repo, and re-run the survey afterwards.
+
+Verify each repo after writing: the source checkout no longer shows the committed edits (`git status --short`), and
+the pushed branch SHA and the PR (new or existing) match the commit (`git ls-remote <remote> <branch>`, `gh pr view`).
 
 ## 6. Report
 
