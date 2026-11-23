@@ -1,7 +1,7 @@
 ---
 name: github
 description: "Non-obvious GitHub CLI (gh) mechanics: PR review comments and threads, posting reviews, merge queues, batched GraphQL mutations, and gh/jq gotchas. Use when working with the gh CLI or GitHub API."
-allowed-tools: "Bash(git:*), Bash(gh:*), Bash(jq:*), Read"
+allowed-tools: "Bash(git:*), Bash(jq:*), Read"
 argument-hint: [issue-number or owner/repo#number]
 user-invocable: false
 disable-model-invocation: false
