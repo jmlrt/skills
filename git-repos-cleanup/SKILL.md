@@ -99,7 +99,7 @@ flagging noise (key reordering, whitespace) and deletions of tracked files. Ask 
 suspicious changes before proposing anything. Then, per repo, propose one path-scoped commit (only files from the
 survey, never `git add -A`) and:
 
-- **Repo without a remote** (e.g. `elastic-toolbox`, Notes): commit with `--no-gpg-sign`, no PR.
+- **Repo without a remote** (e.g. Notes): commit with `--no-gpg-sign`, no PR.
 - **Repo with a remote**: commit on a worktree branch (`git worktree add --no-track -b jmlrt/<topic>
   .worktrees/<topic> origin/main`, then apply the change there), push with an explicit refspec
   (`git push -u origin <branch>:refs/heads/<branch>`) and open a draft PR. First check for an open PR the user owns in
