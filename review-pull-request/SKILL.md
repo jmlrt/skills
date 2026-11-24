@@ -155,3 +155,4 @@ At the end of a session, if the user corrected the approach, append the correcte
 
 - When the user links a posted review or comment, fetch it right away; they may have changed the draft.
 - If the PR author has left the project, don't ask them for follow-ups: sort each finding into "drop", "fold into the next change touching this code", or "tracking issue", and check proposed deadlines against the team's planning.
+- When the repo owner already requested changes (or shared a PoC), map each finding to what their work covers and post only the uncovered ones as a COMMENT; don't ask "agreed with release management?" on release-management-authored PRs (the user and author are release management).
