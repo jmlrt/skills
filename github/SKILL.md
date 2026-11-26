@@ -16,6 +16,8 @@ disable-model-invocation: false
 - `gh` targets the **current git repository**. For any other repo, always pass `--repo <owner/repo>`.
 - Keep reads narrow: `--json` with a short field list, explicit `--method GET` for `gh api` reads.
 - After any write, verify by re-querying GitHub; some failures are silent (exit 0, nothing done).
+- Before editing a PR or issue title/body (`gh pr edit --body`, `update_pull_request`), re-fetch it in the same step and build the new text from that read. Another session may have changed it since an earlier read, and a stale write silently drops its content.
+- CODEOWNERS: `dir/*` matches only files directly in `dir`, not nested paths (`dir/` or `dir/**` does). Before naming an owner from CODEOWNERS, check the rule really matches the nested path and no later line overrides it.
 
 ## Load a skill from a pull request
 
